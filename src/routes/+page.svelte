@@ -1,0 +1,64 @@
+<script>
+  import { auth } from '$lib/client';
+  import { signInWithEmailAndPassword } from 'firebase/auth';
+  import { goto } from '$app/navigation';
+  // @ts-ignore
+  let email = '';
+  let password = '';
+  let errorMessage = '';
+
+  const login = async () => {
+    errorMessage = ''; // Clear any previous error message
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      goto('/panel'); 
+    } catch (error) {
+      // @ts-ignore
+      console.error('Error logging in:', error.message);
+      // @ts-ignore
+      errorMessage = error.message; // Set the error message
+    }
+  };
+ </script>
+
+<section class="h-screen bg-brand-1 flex icc  ">
+ 
+  <div class="bg-slate-2 p-8 w-80% lg:w-120">  
+    <h1 class="mb-8" >Acceder</h1>
+    <form on:submit|preventDefault={login}>
+      <label>
+        Email: <br>
+        <input type="email" bind:value={email} required>
+      </label>
+      <label>
+        Password: <br>
+        <input type="password" bind:value={password} required>
+      </label>
+      <button class="p-2" type="submit">Entrar</button>
+    
+    
+    </form>
+    
+    {#if errorMessage}
+      <p style="color: red;">{errorMessage}</p>
+    {/if}
+  </div>
+
+
+</section>
+
+<style>
+ 
+  form{
+    --at-apply: flex flex-col gap-4 ;
+  }
+  label{
+    --at-apply: text-3 ;
+  }
+  input{
+    --at-apply: border-1 border-slate-3 p-2 w-full ;
+  }
+
+
+</style>
+  
