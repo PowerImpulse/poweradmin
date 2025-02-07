@@ -102,22 +102,6 @@ const eliminarUsuario = async (uid: string) => {
       }
   };
 
-  // FILTERS
-
-  let textSearch = "";
-  let filters: GridFilter[];
-$: filters = [ 
-  {
-            key: "text-search",
-            columns: ["username", "email",  "role", "isBlocked"],
-            filter: (row: any, colKey: string) => { 
-                const search = (val: string | null) => val != undefined && val.toString().toLocaleLowerCase().includes(textSearch.toLocaleLowerCase());
-                return search(row)
-            }, 
-            active: (textSearch && textSearch.length > 0) ? true : false
-        }
-];
-
 
  
 
@@ -166,6 +150,24 @@ $: filters = [
       itemsPerPageOptions: [10, 20, 100]
   } as PagingData;
   let showModal = false;
+
+
+  // FILTERS
+
+  let textSearch = "";
+  let filters: GridFilter[];
+$: filters = [ 
+  {
+            key: "text-search",
+            columns: ["infoUser", "email",  "role", "isBlocked"],
+            filter: (row: any, colKey: string) => { 
+                const search = (val: string | null) => val != undefined && val.toString().toLocaleLowerCase().includes(textSearch.toLocaleLowerCase());
+                return search(row)
+            }, 
+            active: (textSearch && textSearch.length > 0) ? true : false
+        }
+];
+
 </script>
 
 <div class="bar-actions pb-16">

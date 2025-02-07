@@ -12,13 +12,13 @@
   
   let loggedIn = false;
 
-  // isLoggedIn.subscribe(value => {
-  //   loggedIn = value;
+  isLoggedIn.subscribe(value => {
+    loggedIn = value;
 
-  //   if (!loggedIn) {
-  //     goto('/');
-  //   }
-  // }); 
+    if (!loggedIn) {
+      goto('/');
+    }
+  }); 
 </script>
 
 <div class="app h-screen ">

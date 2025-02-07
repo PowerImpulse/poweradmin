@@ -9,7 +9,7 @@
 
 <SectionName Title="Usuarios">
   <div slot="sideactions">
- <p class="text-3"> AGREGAR USUARIO</p>
+      <p class="text-3"> AGREGAR USUARIO</p>
   </div>
   <UsuariosGridCraft />
 </SectionName>
