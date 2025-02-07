@@ -3,13 +3,11 @@ export const exportToCSV = <T extends Record<string, any>>(
   obj: T[],
   fileName: string
 ) => {
-  let csvContent = "data:text/csv;charset=utf-8,";
+  let csvContent = "\uFEFF";
 
-  // Encabezado del CSV
   const header = headers.join(";");
   csvContent += header + "\n";
 
-  // Filas de datos
   const rows = obj
     .map((row) => {
       const rowData = headers.map((key) => {
@@ -32,11 +30,12 @@ export const exportToCSV = <T extends Record<string, any>>(
 
   csvContent += rows;
 
-  // Crear y descargar el archivo CSV
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `${fileName}.csv`);
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute("download", "asistencia.csv");
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
