@@ -12,8 +12,10 @@
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/adapter-static": "^3.0.2",
+		"@sveltejs/adapter-vercel": "^5.6.1",
 		"@sveltejs/kit": "^2.5.24",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
+		"@tsconfig/svelte": "^5.0.4",
 		"@unocss/extractor-svelte": "^0.61.9",
 		"@unocss/svelte-scoped": "^0.61.9",
 		"@vincjo/datatables": "^1.14.10",
@@ -30,7 +32,6 @@
 	"dependencies": {
 		"@fontsource/montserrat": "^5.0.16",
 		"@mediakular/gridcraft": "^0.2.8",
-		"@sveltejs/adapter-vercel": "^5.6.1",
 		"@tanstack/svelte-table": "^8.20.5",
 		"@unocss/reset": "^0.61.9",
 		"ag-grid-community": "^32.1.0",
