@@ -85,18 +85,12 @@ onSnapshot(usersFirebase, (querySnapshot) => {
     try {
         // Elimina el usuario de Firestore
         await deleteDoc(doc(dbUsers, "users", uid));
-        
-        // Elimina el usuario de Firebase Authentication
-        const user = await getAuth().currentUser;
-        if (user && user.uid === uid) {
-            await deleteUser(user);
-        } else {
-            error = "Usuario no autenticado o UID no coincide.";
-        }
     } catch (e: any) {
         error = `Error al eliminar usuario: ${e.message}`;
     }
 };
+
+
 
 
 
@@ -136,10 +130,8 @@ onSnapshot(usersFirebase, (querySnapshot) => {
                 value: row,
                 onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
                 onEliminar: () => {
-                    // Obtener user.uid si es necesario aquí
-                    const user = auth.currentUser;
-                    const uidToDelete = user ? user.uid : row.uid;
-                    eliminarUsuario(uidToDelete);
+              
+                    eliminarUsuario(row.uid);
                 },
             };
             
