@@ -22,15 +22,30 @@
   let password = "UnjsdK44@";
   let error = "";
 
-  onSnapshot(usersFirebase, (querySnapshot) => {
-      let listaUsuarios: Usuario[] = [];
-      querySnapshot.forEach((doc) => {
-          let usuario = { ...doc.data(), uid: doc.id } as Usuario;
-          listaUsuarios.push(usuario);
-      });
-      usuarios = listaUsuarios;
-      loading = false;
-  });
+//   onSnapshot(usersFirebase, (querySnapshot) => {
+//       let listaUsuarios: Usuario[] = [];
+//       querySnapshot.forEach((doc) => {
+//           let usuario = { ...doc.data(), uid: doc.id } as Usuario;
+//           listaUsuarios.push(usuario);
+//       });
+//       usuarios = listaUsuarios;
+//       loading = false;
+//   });
+
+onSnapshot(usersFirebase, (querySnapshot) => {
+    let listaUsuarios: Usuario[] = [];
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data && data.email && data.username && data.role !== undefined) { // Validación básica
+            let usuario = { ...data, uid: doc.id } as Usuario;
+            listaUsuarios.push(usuario);
+        } else {
+            console.warn("Documento inválido:", doc.id, data); // Registra documentos con estructura incorrecta
+        }
+    });
+    usuarios = listaUsuarios;
+    loading = false;
+});
 
   const crearUsuario = async () => {
       if (email.trim() !== "" && username.trim() !== "" && role.trim() !== "" && password.trim() !== "") {
@@ -66,26 +81,13 @@
       });
   };
 
-//   const eliminarUsuario = async (uid: string) => {
-//         try {
-//             await deleteDoc(doc(dbUsers, "users", uid));
-
-//             const user = auth.currentUser;
-//             if (user) {
-//                 await deleteUser(user);
-//             }
-//         } catch (e: any) {
-//             error = `Error al eliminar usuario: ${e.message}`;
-//         }
-//     };
-
-const eliminarUsuario = async (uid: string) => {
+  const eliminarUsuario = async (uid: string) => {
     try {
         // Elimina el usuario de Firestore
         await deleteDoc(doc(dbUsers, "users", uid));
         
         // Elimina el usuario de Firebase Authentication
-        const user = auth.currentUser;
+        const user = await getAuth().currentUser;
         if (user && user.uid === uid) {
             await deleteUser(user);
         } else {
@@ -95,6 +97,8 @@ const eliminarUsuario = async (uid: string) => {
         error = `Error al eliminar usuario: ${e.message}`;
     }
 };
+
+
 
   const teclaPresionada = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
@@ -145,9 +149,9 @@ const eliminarUsuario = async (uid: string) => {
   ];
 
   let paging = {
-      itemsPerPage: 10,
+      itemsPerPage: 50,
       currentPage: 1,
-      itemsPerPageOptions: [10, 20, 100]
+      itemsPerPageOptions: [10, 50, 100]
   } as PagingData;
   let showModal = false;
 
@@ -156,29 +160,39 @@ const eliminarUsuario = async (uid: string) => {
 
   let textSearch = "";
   let filters: GridFilter[];
+
+
 $: filters = [ 
   {
-            key: "text-search",
-            columns: ["infoUser", "email",  "role", "isBlocked"],
-            filter: (row: any, colKey: string) => { 
-                const search = (val: string | null) => val != undefined && val.toString().toLocaleLowerCase().includes(textSearch.toLocaleLowerCase());
-                return search(row)
-            }, 
-            active: (textSearch && textSearch.length > 0) ? true : false
-        }
+    key: "text-search",
+    columns: ["infoUser", "role", "isBlocked"],
+    filter: (row: Usuario, colKey: string) => { 
+        // Verifica si row es undefined o null
+        if (!row) return false;
+
+        // Función para buscar en un valor específico
+        const search = (val: string | null) => val != undefined && val.toString().toLocaleLowerCase().includes(textSearch.toLocaleLowerCase());
+
+        // Buscar en las propiedades relevantes del usuario
+        return search(row.email) || search(row.username) || search(row.role) || search(row.isBlocked ? 'Bloqueado' : 'Activo');
+    }, 
+    active: (textSearch && textSearch.length > 0) ? true : false
+  },
+  
 ];
 
 </script>
 
 <div class="bar-actions pb-16">
     <div class="w-200 ">
-        <input class="w-160 p-1" type="text" placeholder="Filtra por usuario, rol o estado" bind:value={textSearch} />
+        <input class="w-160 p-1" type="text" placeholder="Filtra por usuario o email" bind:value={textSearch} />
     </div>  
     
     <div class="">
         <button class=" rounded-full " on:click={() => (showModal = true)}> <AddLarge size={24} /> </button> 
     </div>
     
+
 </div>
 
 
