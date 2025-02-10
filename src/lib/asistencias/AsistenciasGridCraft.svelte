@@ -7,6 +7,7 @@
     where,
     query,
     Query,
+    orderBy,
   } from "firebase/firestore";
   import { dbTimeRecord, dbUsers } from "$lib/client";
   import { BarLoader } from "svelte-loading-spinners";
@@ -66,7 +67,9 @@
         filtros.push(where("startTime", ">=", startTimestamp));
       if (endTimestamp) filtros.push(where("startTime", "<=", endTimestamp));
 
-      asistenciasQuery = query(asistenciasQuery, ...filtros);
+      asistenciasQuery = query(asistenciasQuery, ...filtros, orderBy("startTime", "desc"));
+    } else {
+      asistenciasQuery = query(asistenciasQuery, orderBy("startTime", "desc"));
     }
 
     onSnapshot(asistenciasQuery, (asistenciasSnapshot) => {
