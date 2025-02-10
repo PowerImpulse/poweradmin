@@ -22,6 +22,7 @@
   import AsistenciaInfoSalida from "$lib/asistencias/AsistenciaInfoSalida.svelte";
   import type { Usuario, Asistencia } from "$lib/types";
   import { exportToCSV } from "$lib/helpers/exportToCSV";
+  import { exportToExcel } from "$lib/helpers/exportToExcel";
 
   let asistenciasConNombre: Asistencia[] = [];
   let selectedRows: Asistencia[] = [];
@@ -140,6 +141,25 @@
     },
   ];
 
+  const generateExcel = () => {
+    const headers = [
+      "description",
+      "username",
+      "startTime",
+      "endTime",
+      "imageUrl",
+      "startLatitude",
+      "startLongitude",
+      "startLocation",
+      "endImageUrl",
+      "endLatitude",
+      "endLongitude",
+      "endLocation",
+    ];
+
+    exportToExcel(headers, asistenciasConNombre, "asistencias");
+  };
+
   const generateCSV = () => {
     const headers = [
       "description",
@@ -210,12 +230,18 @@
       <p class="text-red-600 font-semibold mt-3">{errorMessage}</p>
     {/if}
 
-    <div class="flex justify-end mt-4">
+    <div class="flex justify-end mt-4 space-x-4">
       <button
         class="bg-blue-500 text-white font-semibold py-2 px-4"
         on:click={generateCSV}
       >
         Exportar a CSV
+      </button>
+      <button
+        class="bg-green-500 text-white font-semibold py-2 px-4"
+        on:click={generateExcel}
+      >
+        Exportar a Excel
       </button>
     </div>
   </div>
