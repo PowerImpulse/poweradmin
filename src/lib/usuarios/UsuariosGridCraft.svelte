@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDoc, FirestoreError } from "firebase/firestore";
-  import { getAuth, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+  import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
+  import { getAuth, createUserWithEmailAndPassword} from "firebase/auth";
   import { dbUsers } from "$lib/client";
   import { Grid, GridFooter, type PagingData, type GridColumn, type GridFilter } from '@mediakular/gridcraft'; 
   import UsuarioEmail from "$lib/usuarios/UsuarioEmail.svelte";
@@ -22,25 +22,16 @@
   let password = "UnjsdK44@";
   let error = "";
 
-//   onSnapshot(usersFirebase, (querySnapshot) => {
-//       let listaUsuarios: Usuario[] = [];
-//       querySnapshot.forEach((doc) => {
-//           let usuario = { ...doc.data(), uid: doc.id } as Usuario;
-//           listaUsuarios.push(usuario);
-//       });
-//       usuarios = listaUsuarios;
-//       loading = false;
-//   });
 
 onSnapshot(usersFirebase, (querySnapshot) => {
     let listaUsuarios: Usuario[] = [];
     querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data && data.email && data.username && data.role !== undefined) { // Validación básica
+        if (data && data.email && data.username && data.role !== undefined) { 
             let usuario = { ...data, uid: doc.id } as Usuario;
             listaUsuarios.push(usuario);
         } else {
-            console.warn("Documento inválido:", doc.id, data); // Registra documentos con estructura incorrecta
+            console.warn("Documento inválido:", doc.id, data); 
         }
     });
     usuarios = listaUsuarios;
@@ -83,25 +74,18 @@ onSnapshot(usersFirebase, (querySnapshot) => {
 
   const eliminarUsuario = async (uid: string) => {
     try {
-        // Elimina el usuario de Firestore
         await deleteDoc(doc(dbUsers, "users", uid));
     } catch (e: any) {
         error = `Error al eliminar usuario: ${e.message}`;
     }
 };
 
-
-
-
-
+// Crear usuario al presionar ENTER
   const teclaPresionada = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
           crearUsuario();
       }
   };
-
-
- 
 
   let columns: GridColumn<Usuario>[] = [
       { 
@@ -153,8 +137,9 @@ onSnapshot(usersFirebase, (querySnapshot) => {
   let textSearch = "";
   let filters: GridFilter[];
 
-
+// @ts-ignore
 $: filters = [ 
+    // busca solo en usuario
   {
     key: "text-search",
     columns: ["infoUser", "role", "isBlocked"],
@@ -175,16 +160,15 @@ $: filters = [
 
 </script>
 
-<div class="bar-actions pb-16">
-    <div class="w-200 ">
+<div class="bar-actions pb-16 grid md:grid-cols-3 gap-6">
+    <div class="grid-col-span-2 ">
         <input class="w-160 p-1" type="text" placeholder="Filtra por usuario o email" bind:value={textSearch} />
     </div>  
     
-    <div class="">
-        <button class=" rounded-full " on:click={() => (showModal = true)}> <AddLarge size={24} /> </button> 
+    <div class="flex md:justify-end ">
+        <button class=" rounded-full flex ic gap-4 " on:click={() => (showModal = true)}> Nuevo Usuario<AddLarge size={32} /> </button> 
     </div>
     
-
 </div>
 
 
@@ -197,9 +181,8 @@ $: filters = [
 {/if}
 
 <Modal bind:showModal>
-    <h3 slot="header">
-		Crear nuevo Usuario
-	</h3>
+    <h3 class="text-20">Crear nuevo Usuario</h3>
+
     <div class="flex flex-col gap-4 p-4 lg:p-8">
         <input type="text" placeholder="Correo electrónico" bind:value={email} />
         <input type="text" placeholder="Nombre de usuario" bind:value={username} />
@@ -223,8 +206,5 @@ $: filters = [
   input, select{
     --at-apply: w-full p-2 border-0 border-2 border-slate-2;
   }
-  .bar-actions{
-    display: flex;
-    justify-content: space-between;
-  }
+  
 </style>

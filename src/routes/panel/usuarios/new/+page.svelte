@@ -1,24 +1,13 @@
 <script lang="ts">
-   import { collection, onSnapshot, getFirestore, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
-    import { getAuth, createUserWithEmailAndPassword, deleteUser } from "firebase/auth"; // Importar métodos de Firebase Authentication
-    import { dbUsers } from "$lib/client"; // Asegúrate de que dbUsers es la referencia correcta a tu Firestore
+    import { collection, addDoc } from "firebase/firestore";
+    import { getAuth, createUserWithEmailAndPassword} from "firebase/auth"; 
+    import { dbUsers } from "$lib/client"; 
+    import SectionName from "$lib/components/ui/SectionName.svelte";
 
     const usersFb = collection(dbUsers, "users");
     const auth = getAuth(); // Inicializar Firebase Auth
 
-    let usuarios: any[] = [];
-
-    // onSnapshot(usersFb, (querySnapshot) => {
-    //     let listaUsuarios: any[] = [];
-    //     querySnapshot.forEach((doc) => {
-    //         let usuario = { ...doc.data(), uid: doc.id };
-    //         listaUsuarios.push(usuario);
-    //     });
-    //     usuarios = listaUsuarios;
-    //     // console.log(usuarios);
-    // });
-
-    let email = "Jhon@me.com yun@me.com";
+    let email = "Jhon@me.com";
     let username = "Jhon Do ";
     let role = "Técnico";
     let password = "UnjsdK44@";
@@ -54,74 +43,37 @@
         password = "";
     };
 
-    const bloquearDesbloquearUsuario = async (usuario: any) => {
-        await updateDoc(doc(dbUsers, "users", usuario.uid), {
-            isBlocked: !usuario.isBlocked,
-        });
-    };
+   
 
-    const eliminarUsuario = async (uid: string) => {
-        try {
-            // Eliminar usuario de Firestore
-            await deleteDoc(doc(dbUsers, "users", uid));
-
-            // Eliminar usuario de Firebase Authentication
-            const user = auth.currentUser;
-            if (user) {
-                await deleteUser(user);
-            }
-        } catch (e: any) {
-            error = `Error al eliminar usuario: ${e.message}`;
-        }
-    };
-
-    const teclaPresionada = (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-            crearUsuario();
-        }
-    };
-    import { sectionTitle } from '$lib/stores';
-  import Button from "$lib/components/ui/Button.svelte";
-  import SectionName from "$lib/components/ui/SectionName.svelte";
-      sectionTitle.set('Nuevo usuario');
 </script>
 
 <SectionName Title="Crear Nuevo Usuario" >
 
 <div class="panel">
-  <div class="col">
-  <form class="crearnuevo">
-  <input type="text" placeholder="Correo electrónico" bind:value={email} />
-  <input type="text" placeholder="Nombre de usuario" bind:value={username} />
-  <input type="password" placeholder="Contraseña" bind:value={password} /> <!-- Campo para la contraseña -->
-  <select bind:value={role}>
-    <option value="Admin">Super Admin</option>
-      <option value="Admin">Admin</option>
-      <option value="Técnico">Técnico</option>
-  </select>
-<div> 
-  <Button on:click={crearUsuario} >
-  Agregar Usuario
-</Button></div>
- 
-</form>
-</div>
-<div class="col">
-
-</div>
+    <div class="col">
+        <form class="crearnuevo grid gap-4 ">
+            <input type="text" placeholder="Correo electrónico" bind:value={email} />
+            <input type="text" placeholder="Nombre de usuario" bind:value={username} />
+            <input type="password" placeholder="Contraseña" bind:value={password} /> <!-- Campo para la contraseña -->
+            <select bind:value={role}>
+                <option value="Admin">  Super Admin</option>
+                <option value="Admin">  Admin</option>
+                <option value="Técnico">Técnico</option>
+            </select>
+        <div> 
+            <button on:click={crearUsuario} class="p-4 bg-blue-8 hover:bg-sky-6 border-1   text-white ">Agregar Usuario</button>
+        </div>
+        </form>
+       </div>
+    
 </div>
 
 </SectionName>
 
 <style>
-  .crearnuevo{
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
+  
   input, select{
-    padding: 8px;
-    border: 2px solid var(--gr-100);
-    font-size: 1rem;
+    @apply p-4 border-2 border-zinc-5 text-4  ;
+   
   }
 </style>
