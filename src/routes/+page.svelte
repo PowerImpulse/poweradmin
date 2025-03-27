@@ -1,22 +1,25 @@
-<script>
+<script lang="ts">
   import { auth } from '$lib/client';
   import { signInWithEmailAndPassword } from 'firebase/auth';
   import { goto } from '$app/navigation';
-  // @ts-ignore
-  let email = '';
-  let password = '';
+ 
+  let email = 'edgar.carmona@powerimpulse.com.mx';
+  let password = 'cdASfo$f$l}2;-za';
   let errorMessage = '';
 
   const login = async () => {
-    errorMessage = ''; // Clear any previous error message
+    errorMessage = '';
+    if (!email || !password) {
+      errorMessage = 'Por favor, complete todos los campos.';
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      goto('/panel'); 
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      goto('/panel');
     } catch (error) {
-      // @ts-ignore
-      console.error('Error logging in:', error.message);
-      // @ts-ignore
-      errorMessage = error.message; // Set the error message
+      console.error('Error logging in:', error?.message || 'Error desconocido');
+      errorMessage = error?.message || 'Error al iniciar sesión. Inténtelo de nuevo.';
     }
   };
  </script>
