@@ -50,7 +50,7 @@ interface Asistencia {
 
 interface Equipo {
   capacidad_500: string;
-  created_at?: Timestamp;
+  created_at: Date;
   empresa_501: string;
   grupo: string;
   inactivo: boolean;
@@ -59,6 +59,7 @@ interface Equipo {
   no_serie_500: string;
   ref_ubic: string;
   tipo_de_equipo_500: string;
+  isBlocked:boolean
 }
 
 export type { Usuario, Asistencia, Equipo };

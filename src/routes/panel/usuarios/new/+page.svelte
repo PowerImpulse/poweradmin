@@ -73,7 +73,7 @@
 <style>
   
   input, select{
-    @apply p-4 border-2 border-zinc-5 text-4  ;
+    --at-apply:  p-4 border-2 border-zinc-5 text-4  ;
    
   }
 </style>

@@ -24,11 +24,9 @@
 
   let asistenciasConNombre: Asistencia[] = [];
   let selectedRows: Asistencia[] = [];
-  let showCheckboxes = true;
   let loading = true;
   let errorMessage = "";
 
-  const asistenciasRef = collection(dbTimeRecord, "time_record");
   const usuariosRef = collection(dbUsers, "users");
 
   let startDate: string = "";
