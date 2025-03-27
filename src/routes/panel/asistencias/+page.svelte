@@ -1,5 +1,4 @@
 <script lang="ts">
-
   import AsistenciasGridCraft from "$lib/asistencias/AsistenciasGridCraft.svelte";
   import { sectionTitle } from '$lib/stores';
   import Section from "$lib/components/ui/SectionName.svelte";
@@ -7,6 +6,5 @@
 </script>
 
 <Section Title="Lista de Asistencias">
-
- <AsistenciasGridCraft />
+  <AsistenciasGridCraft />
 </Section>
