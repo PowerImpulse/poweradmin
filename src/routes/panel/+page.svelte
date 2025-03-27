@@ -7,8 +7,6 @@
   <div class=" text-white/80 grid  items-end ">
     <div>
       <h1 class="text-7vw leading-1.2em">Power Admin</h1>
-    
- 
     </div>
   </div>
 
