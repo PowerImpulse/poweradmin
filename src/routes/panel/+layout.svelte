@@ -1,12 +1,12 @@
-<script>
+<script lang="ts">
+  // @ts-ignore
   import { goto } from '$app/navigation';
   import BrandSide from "$lib/components/BrandSide.svelte";
   import Navbar from "$lib/components/Navbar.svelte";
   import Sidebar from "$lib/components/ui/Sidebar.svelte";
   import MenuLateral from "$lib/components/MenuLateral.svelte";
 
-  import { sectionTitle, isLoggedIn } from '$lib/stores';
-  import { onMount } from 'svelte';
+  import { isLoggedIn } from '$lib/stores';
   import Time from '$lib/components/ui/Time.svelte';
   import ButtonLogOut from '$lib/components/ui/ButtonLogOut.svelte';
   
