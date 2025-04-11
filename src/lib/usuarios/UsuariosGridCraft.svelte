@@ -91,6 +91,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
       { 
           key: 'infoUser', 
           title: 'Usuario', 
+          //@ts-ignore
           renderComponent: UsuarioEmail, 
           accessor: (row) => ({ email: row.email, username: row.username }),
           sortValue: (row: Usuario) => {
@@ -120,6 +121,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
             };
             
           },
+          //@ts-ignore
           renderComponent: AccionesUsuario,
       },
   ];

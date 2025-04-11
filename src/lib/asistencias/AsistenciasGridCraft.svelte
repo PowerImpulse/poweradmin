@@ -19,8 +19,9 @@
   } from "@mediakular/gridcraft";
   import AsistenciaInfoEntrada from "$lib/asistencias/AsistenciaInfoEntrada.svelte";
   import AsistenciaInfoSalida from "$lib/asistencias/AsistenciaInfoSalida.svelte";
-  import type { Usuario, Asistencia } from "$lib/types";
+  import type {  Asistencia } from "$lib/types";
   import { exportToCSV } from "$lib/helpers/exportToCSV";
+
 
   let asistenciasConNombre: Asistencia[] = [];
   let selectedRows: Asistencia[] = [];
@@ -230,12 +231,14 @@
       {
         key: "infoEntrada",
         title: "Ubicación Entrada",
+        //@ts-ignore
         renderComponent: AsistenciaInfoEntrada,
         accessor: (row) => row,
       },
       {
         key: "infoSalida",
         title: "Ubicación Salida",
+         //@ts-ignore
         renderComponent: AsistenciaInfoSalida,
         accessor: (row) => ({
           endImageUrl: row.endImageUrl,

@@ -2,8 +2,9 @@
 
     import { auth } from '$lib/client';
     import { signOut } from 'firebase/auth';
+    // @ts-ignore
     import { goto } from '$app/navigation';
-    import { user } from '$lib/stores';
+    import { user, isLoggedIn } from '$lib/stores';
     import PortOutput from "carbon-icons-svelte/lib/PortOutput.svelte";
 
     let errorMessage = '';
@@ -12,6 +13,9 @@
 
             goto('/');
             await signOut(auth);
+            $isLoggedIn = false;
+            // @ts-ignore
+            $user = {}
             
         } catch (err) {
             if (err instanceof Error) {
