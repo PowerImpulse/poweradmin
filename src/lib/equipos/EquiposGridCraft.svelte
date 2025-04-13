@@ -113,7 +113,7 @@
     <p>Cargando...</p>
   {:else}
     <p class="error">{error}</p>
-    <Grid data={equipos} {paging} {columns}  />
+    <Grid data={equipos} bind:paging={paging} {columns}  />
     <GridFooter bind:paging />
   {/if}
   

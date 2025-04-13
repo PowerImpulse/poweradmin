@@ -221,7 +221,7 @@
 
   <Grid
     data={asistenciasConNombre}
-    {paging}
+    bind:paging={paging}
     bind:selectedRows
     columns={[
       { key: "description", title: "Descripción" },

@@ -178,7 +178,7 @@ $: filters = [
   <p>Cargando...</p>
 {:else}
 <p class="error">{error}</p>
-  <Grid data={usuarios} {paging} bind:columns bind:selectedRows  bind:filters />
+  <Grid data={usuarios} bind:paging={paging} bind:columns bind:selectedRows  bind:filters />
   <GridFooter bind:paging />
 {/if}
 
@@ -190,9 +190,9 @@ $: filters = [
         <input type="text" placeholder="Nombre de usuario" bind:value={username} />
         <input type="password" placeholder="Contraseña" bind:value={password} />
         <select bind:value={role}>
-          <option value="SuperAdmin">Super Admin</option>
-            <option value="Admintrador">Admin</option>
-            <option value="Técnico">Técnico</option>
+          <option value="superadmin">Super Admin</option>
+            <option value="admin">Admin</option>
+            <option value="tecnico">Técnico</option>
         </select>
         <button on:click={crearUsuario}>Agregar</button>
         <p class="error">{error}</p>
