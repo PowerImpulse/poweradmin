@@ -26,7 +26,7 @@ export const crearUsuario = async (email: string, username: string, role: string
     }
 };
 
-export const bloquearDesbloquearUsuario = async (usuario: Usuario) => {
+export const bloquearUsuario = async (usuario: Usuario) => {
     try {
         await updateDoc(doc(dbUsers, "users", usuario.uid), {
             isBlocked: !usuario.isBlocked,
