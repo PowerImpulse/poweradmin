@@ -5,6 +5,7 @@
 	import SectionName from '$lib/components/ui/SectionName.svelte';
 	import { BarLoader } from 'svelte-loading-spinners';
 	import Modal from '$lib/components/ui/Modal.svelte'; // Tu componente Modal
+	import TitleArea from '$lib/components/ui/TitleArea.svelte';
 
 	const usersFb = collection(dbUsers, 'users');
 	const auth = getAuth();
@@ -21,7 +22,7 @@
 
 	// ... (resto de variables de estado: lugar_ciudad, nombre_completo, etc. sin cambios)
     let lugar_ciudad = 'Guadalajara';
-    let lugar_estado = 'Jalisco';
+    let lugar_fecha = '5 de Mayo de 2025';
     let nombre_completo = 'Jean Reynoso ';
     let estado_civil = 'soltero';
     let edad: number | null = null;
@@ -29,10 +30,11 @@
     let rfc = 'REVJ750603JX3';
     let curp = 'REVJ750603HDFYGN00';
     let domicilio_calle = 'las Vegas';
-    let domicilio_numero_ext = '500';
-    let domicilio_numero_int = '';
-    let domicilio_colonia = 'Ahuehuete';
-    let domicilio_cp = '52943';
+    let domicilio_referencia = '500';
+	let domicilio_colonia = 'Ahuehuete';
+	let domicilio_cp = '52943';
+    let domicilio_municipio = '';
+	let domicilio_estado = '';
     let fecha_ingreso: string = '';
     let puesto = '1';
     let dias_laborables: string[] = [''];
@@ -62,14 +64,15 @@
 		rfc = '';
 		curp = '';
 		domicilio_calle = '';
-		domicilio_numero_ext = '';
-		domicilio_numero_int = '';
+		domicilio_referencia = '';
 		domicilio_colonia = '';
 		domicilio_cp = '';
+		domicilio_municipio= '';
+		domicilio_estado = '';
 		fecha_ingreso = '';
 		puesto = '';
 		dias_laborables = [''];
-		// No reseteamos lugar_ciudad y lugar_estado si son valores más fijos
+		// No reseteamos lugar_ciudad y lugar_fecha si son valores más fijos
 	};
 
 	const crearUsuario = async () => {
@@ -102,7 +105,7 @@
 				created_at: new Date(),
 				uid: user.uid,
 				lugar_ciudad: lugar_ciudad,
-				lugar_estado: lugar_estado,
+				lugar_fecha: lugar_fecha,
 				nombre_completo: nombre_completo,
 				estado_civil: estado_civil,
 				edad: edad,
@@ -111,9 +114,10 @@
 				curp: curp,
 				domicilio: {
 					calle: domicilio_calle,
-					numero_ext: domicilio_numero_ext,
-					numero_int: domicilio_numero_int,
+					numero_ext: domicilio_referencia,
+					numero_int: domicilio_municipio,
 					colonia: domicilio_colonia,
+					estado: domicilio_estado,
 					cp: domicilio_cp
 				},
 				fecha_ingreso: fecha_ingreso,
@@ -176,87 +180,154 @@
 	<div class="panel">
 		<div class="col">
 			<!-- Deshabilitar el formulario mientras carga -->
-			<fieldset disabled={isLoading} class="crearnuevo grid gap-4">
-				<h3 class="text-xl">Datos de Acceso</h3>
+			<fieldset disabled={isLoading} class="crearnuevo grid gap-4 ">
+				<TitleArea title="Datos de Acceso" class="pt-0" />
 				<div class="grid lg:grid-cols-2 gap-6">
-				<input type="email" placeholder="Correo electrónico" bind:value={email} required />
-				<input type="text" placeholder="Nombre de usuario" bind:value={username} required />
-				<input type="password" placeholder="Contraseña" bind:value={password} required />
-				<select bind:value={role} required>
-                    <option value="superadmin">Super Admin</option>
-					<option value="admin">Admin</option>
-					<option value="tecnico">Técnico</option>
+					<label>
+						Correo electrónico
+						<input type="email" placeholder="Correo electrónico" bind:value={email} required />
+					</label>
+					<label>
+						Nombre de usuario
+						<input type="text" placeholder="Nombre de usuario" bind:value={username} required />
+					</label>
+					<label>
+						Contraseña
+						<input type="password" placeholder="Contraseña" bind:value={password} required />
+					</label>
+					<label>
+						Asignar Rol
+						<select bind:value={role} required>
+							<option value="superadmin">Super Admin</option>
+							<option value="admin">Admin</option>
+							<option value="tecnico">Técnico</option>
+						</select>
+					</label>
+				</div>
+
+				<TitleArea title="Lugar y Fecha" />
+
+				<label>
+					Ciudad
+					<input type="text" placeholder="Ciudad" bind:value={lugar_ciudad} />
+				</label>
+				<label>
+					Fecha
+					<input type="text" placeholder="Ejem: 5 de Mayo 2025" bind:value={lugar_fecha} />
+				</label>
+
+				<TitleArea title="Datos del Trabajador" />
+				<div class="grid lg:grid-cols-2 gap-6">
+					<input type="text" placeholder="Nombre Completo" bind:value={nombre_completo} />
+					<select bind:value={estado_civil}>
+						<option value="soltero">Soltero</option>
+						<option value="casado">Casado</option>
+						<option value="divorciado">Divorciado</option>
+						<option value="viudo">Viudo</option>
+						<option value="union_libre">Unión Libre</option>
+					</select>
+					<input type="number" placeholder="Edad" bind:value={edad} min="18" />
+					<div class="flex gap-4">
+						<div >
+							<label>
+								Masculino
+								<input type="radio" value="masculino" bind:group={genero} />
+							</label>
+						</div>
+						<div>
+							<label>
+								Femenino
+								<input type="radio" value="femenino" bind:group={genero} />
+							</label>
+						</div>
+					</div>
+					<input type="text" placeholder="RFC" bind:value={rfc} />
+					<input type="text" placeholder="CURP" bind:value={curp} />
+				</div>
+
+				<TitleArea title="Dirección" />
+
+				<div class="grid lg:grid-cols-2 gap-6">
+					<label>
+						Calle y número
+						<input type="text" placeholder="Calle" bind:value={domicilio_calle} />
+					</label>
+					<label>
+						Número Exterior
+						<input type="text" placeholder="Número Exterior" bind:value={domicilio_referencia} />
+					</label>
+					<label>
+						Colonia
+						<input type="text" placeholder="Colonia" bind:value={domicilio_colonia} />
+					</label>
+					<label>
+						Municipio / Delegación (opcional)
+						<input type="text" placeholder="" bind:value={domicilio_municipio} />
+					</label>
+
+					<label>
+						Código Postal
+						<input type="text" placeholder="Código Postal" bind:value={domicilio_cp} />
+					</label>
+					<label>
+						Estado
+						<input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_estado} />
+					</label>
+				</div>
+
+				<TitleArea title="Relación Laboral" />
+				<label for="date">
+					Fecha de ingreso 
+					<input type="date" placeholder="Fecha de Ingreso" bind:value={fecha_ingreso} />
+				</label>
+				<label for="puesto" class="block text-sm font-medium text-gray-700">Puesto / Cargo *</label>
+				<select
+					id="puesto"
+					bind:value={puesto}
+					required
+					class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					disabled={isLoading}
+				>
+					<option value="Técnico de servicio AA">Técnico de servicio AA</option>
+					<option value="Técnico de servicio UPS">Técnico de servicio UPS</option>
+					<option value="Coordinador de servicio AA">Coordinador de servicio AA</option>
+					<option value="Coordinador de servicio UPS">Coordinador de servicio UPS</option>
+					<option value="Almacenista/ayudante general">Almacenista/ayudante general</option>
+					<option value="Logística y atención al cliente">Logística y atención al cliente</option>
+					<option value="Ventas">Ventas</option>
+					<option value="Coordinador de ventas">Coordinador de ventas</option>
+					<option value="Técnico servicio plantas emergencia">Técnico servicio plantas emergencia</option>
+					<option value="Coordinador servicio plantas emergencia">Coordinador servicio plantas emergencia</option>
+					<option value="Recepción">Recepción</option>
+					<option value="Recursos humanos">Recursos humanos</option>
+					<option value="Instalador">Instalador</option>
+					<option value="Asistente administrativo">Asistente administrativo</option>
 				</select>
-				</div>
-				<h3 class="text-xl">Lugar y Fecha</h3>
-				<input type="text" placeholder="Ciudad" bind:value={lugar_ciudad} />
-				<input type="text" placeholder="Estado" bind:value={lugar_estado} />
 
-				<h3 class="text-xl">Datos del Trabajador</h3>
-				<div class="grid lg:grid-cols-2 gap-6">
-					
-                        <input type="text" placeholder="Nombre Completo" bind:value={nombre_completo} />
-                        <select bind:value={estado_civil}>
-                            <option value="soltero">Soltero</option>
-                            <option value="casado">Casado</option>
-                            <option value="divorciado">Divorciado</option>
-                            <option value="viudo">Viudo</option>
-                            <option value="union_libre">Unión Libre</option>
-                        </select>
-                        <input type="number" placeholder="Edad" bind:value={edad} min="18" />
-                        <select bind:value={genero}>
-                            <option value="masculino">Masculino</option>
-                            <option value="femenino">Femenino</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                        <input type="text" placeholder="RFC" bind:value={rfc} />
-                        <input type="text" placeholder="CURP" bind:value={curp} />
-						
-				</div>
-				
-				<div class="grid lg:grid-cols-2 gap-6">
-					
-
-					<input type="text" placeholder="Calle" bind:value={domicilio_calle} />
-					<input type="text" placeholder="Número Exterior" bind:value={domicilio_numero_ext} />
-					<input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_numero_int} />
-					<input type="text" placeholder="Colonia" bind:value={domicilio_colonia} />
-					<input type="text" placeholder="Código Postal" bind:value={domicilio_cp} />
-				</div>
-
-				<h3 class="text-xl">Relación Laboral</h3>
-				<input type="date" placeholder="Fecha de Ingreso" bind:value={fecha_ingreso} />
-                <label for="puesto" class="block text-sm font-medium text-gray-700">Puesto / Cargo *</label>
-                 <select id="puesto" bind:value={puesto} required class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled={isLoading}>
-                    <option value="1">Técnico de servicio AA</option> <option value="2">Técnico de servicio UPS</option> <option value="3">Coordinador de servicio AA</option>
-                    <option value="4">Coordinador de servicio UPS</option> <option value="5">Almacenista/ayudante general</option> <option value="6">Logística y atención al cliente</option>
-                    <option value="7">Ventas</option> <option value="8">Coordinador de ventas</option> <option value="9">Técnico servicio plantas emergencia</option>
-                    <option value="10">Coordinador servicio plantas emergencia</option> <option value="11">Recepción</option> <option value="12">Recursos humanos</option>
-                    <option value="13">Instalador</option> <option value="14">Asistente administrativo</option>
-                </select>
-
-				<h3 class="text-xl">Días Laborables</h3>
+				<TitleArea title="Días Laborales" />
 				{#each dias_laborables as dia, index (index)}
-				<div class="flex items-center gap-2">
-					<input type="text" placeholder="Día Laborable (ej. Lunes 9-18)" bind:value={dias_laborables[index]} />
-					{#if dias_laborables.length > 1}
-					<button
-						type="button"
-						on:click={() => quitarDiaLaborable(index)}
-						class="bg-red-500 text-white p-2 rounded hover:bg-red-700"
-						>-</button
-					>
-					{/if}
-				</div>
+					<div class="flex items-center gap-2">
+						<input
+							type="text"
+							placeholder="Día Laborable (ej. Lunes 9-18)"
+							bind:value={dias_laborables[index]}
+						/>
+						{#if dias_laborables.length > 1}
+							<button
+								type="button"
+								on:click={() => quitarDiaLaborable(index)}
+								class="bg-red-500 text-white p-2 rounded hover:bg-red-700"
+							>-</button>
+						{/if}
+					</div>
 				{/each}
 				<button
 					type="button"
 					on:click={agregarDiaLaborable}
 					class="bg-green-500 text-white p-2 rounded w-max hover:bg-green-700"
-					>Agregar Día</button
-				>
+				>Agregar otro horario</button>
 
-				<div>
+				<div class="pt-10">
 					<button
 						type="button"
 						on:click={crearUsuario}
@@ -279,14 +350,18 @@
 <style>
 	input,
 	select {
-		--at-apply: py-1 px-2 border-2 border-zinc-200 text-base rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
+		--at-apply: py-1 px-2 border-2 border-zinc-200 text-base rounded focus:border-brand focus:ring-1 focus:ring-blue-500 outline-none;
 	}
 	fieldset:disabled input,
 	fieldset:disabled select,
 	fieldset:disabled button {
 		--at-apply: bg-gray-100 cursor-not-allowed opacity-70;
 	}
-	.fixed.top-0.left-0.w-full.z-50 {
-		/* background-color: rgba(255, 255, 255, 0.5); */ /* Fondo semitransparente opcional para el loader */
+
+	label, label select, input{
+	  --at-apply: block w-full  ;	
+	}
+	label{
+		--at-apply: text-sm  ;	
 	}
 </style>

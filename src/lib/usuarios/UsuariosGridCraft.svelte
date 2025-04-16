@@ -106,11 +106,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
           title: 'Acciones',
           sortable: false,
           accessor: (row) => {
-            //   return {
-            //       value: row,
-            //       onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
-            //       onEliminar: () => eliminarUsuario(row.uid),
-            //   }
+         
             return {
                 value: row,
                 onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),

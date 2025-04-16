@@ -56,6 +56,7 @@ html {
 }
 
 /* ***** RESET STYLES ******* */ 
+
 *, ::after, ::before, ::backdrop, ::file-selector-button { margin: 0; padding: 0; }
 *, ::after, ::before, ::backdrop, ::file-selector-button { box-sizing: border-box; border: 0 solid; }
 .google-map * { border-style: none; }
@@ -66,6 +67,7 @@ ol, ul, menu { list-style: none; }
 a {text-decoration: none;}
 blockquote, q { quotes: none; } blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
 table { border-collapse: collapse; border-spacing: 0; }
+
 /* ***** END RESET STYLES ******* */ 
 
 body {
@@ -77,13 +79,6 @@ body {
   box-sizing: border-box;
   line-height: 1;
 }
-
-
-
-
-
-
-
 .ubication img {
   width: 120px;
   height: auto;
