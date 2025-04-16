@@ -29,10 +29,12 @@
 
 <style>
 	dialog {
-	
+		/* Añade esta línea */
+		margin: auto; 
 		border-radius: 0.2em;
 		border: none;
 		padding: 0;
+		/* Tus clases w-80% y lg:w-40% ya definen el ancho, lo cual es necesario para que margin: auto funcione horizontalmente */
 	}
 	dialog::backdrop {
 		background: rgba(0, 0, 0, 0.3);
