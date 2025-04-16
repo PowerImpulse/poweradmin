@@ -178,6 +178,7 @@
 			<!-- Deshabilitar el formulario mientras carga -->
 			<fieldset disabled={isLoading} class="crearnuevo grid gap-4">
 				<h3 class="text-xl">Datos de Acceso</h3>
+				<div class="grid lg:grid-cols-2 gap-6">
 				<input type="email" placeholder="Correo electrónico" bind:value={email} required />
 				<input type="text" placeholder="Nombre de usuario" bind:value={username} required />
 				<input type="password" placeholder="Contraseña" bind:value={password} required />
@@ -186,14 +187,14 @@
 					<option value="admin">Admin</option>
 					<option value="tecnico">Técnico</option>
 				</select>
-
+				</div>
 				<h3 class="text-xl">Lugar y Fecha</h3>
 				<input type="text" placeholder="Ciudad" bind:value={lugar_ciudad} />
 				<input type="text" placeholder="Estado" bind:value={lugar_estado} />
 
 				<h3 class="text-xl">Datos del Trabajador</h3>
-				<div class="grid lg:grid-cols-2 gap-12">
-					<div class="grid gap-6">
+				<div class="grid lg:grid-cols-2 gap-6">
+					
                         <input type="text" placeholder="Nombre Completo" bind:value={nombre_completo} />
                         <select bind:value={estado_civil}>
                             <option value="soltero">Soltero</option>
@@ -210,15 +211,17 @@
                         </select>
                         <input type="text" placeholder="RFC" bind:value={rfc} />
                         <input type="text" placeholder="CURP" bind:value={curp} />
-                    </div>
+						
+				</div>
+				
+				<div class="grid lg:grid-cols-2 gap-6">
+					
 
-                    <div class="grid gap-6">
-                        <input type="text" placeholder="Calle" bind:value={domicilio_calle} />
-                        <input type="text" placeholder="Número Exterior" bind:value={domicilio_numero_ext} />
-                        <input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_numero_int} />
-                        <input type="text" placeholder="Colonia" bind:value={domicilio_colonia} />
-                        <input type="text" placeholder="Código Postal" bind:value={domicilio_cp} />
-                    </div>
+					<input type="text" placeholder="Calle" bind:value={domicilio_calle} />
+					<input type="text" placeholder="Número Exterior" bind:value={domicilio_numero_ext} />
+					<input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_numero_int} />
+					<input type="text" placeholder="Colonia" bind:value={domicilio_colonia} />
+					<input type="text" placeholder="Código Postal" bind:value={domicilio_cp} />
 				</div>
 
 				<h3 class="text-xl">Relación Laboral</h3>
@@ -276,7 +279,7 @@
 <style>
 	input,
 	select {
-		--at-apply: p-4 border-2 border-zinc-200 text-base rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
+		--at-apply: py-1 px-2 border-2 border-zinc-200 text-base rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
 	}
 	fieldset:disabled input,
 	fieldset:disabled select,

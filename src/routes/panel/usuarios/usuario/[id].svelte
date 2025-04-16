@@ -1,6 +1,8 @@
-<script>
-   export async function load({ params }) {
-      const { id } = params;
+<script lang="ts">
+   export let id: string;
+
+   export async function load({ params }: { params: { id: string } }) {
+      id = params.id;
       return {
          props: {
             id
