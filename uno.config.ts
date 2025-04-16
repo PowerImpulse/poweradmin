@@ -27,7 +27,6 @@ export default defineConfig({
         "ic"             : "items-center",
         "icc"            : "items-center justify-center",
         "icb"            : "items-center justify-between",
-        "btn"           : [],
         "lh2"            : "leading-8 md:leading-10",
         "t4i"            : "grid md:flex gap-4 leading-8 md:leading-10 items-center gap-4",
   

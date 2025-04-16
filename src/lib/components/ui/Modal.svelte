@@ -15,14 +15,14 @@
 >
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div on:click|stopPropagation>
-		<button class="text-sm text-center" autofocus on:click={() => dialog.close()}>X Cerrar</button>
+		<button class="text-sm text-center" on:click={() => dialog.close()}>X Cerrar</button>
 		<slot name="header" />
 		<div>
 			<slot />
 		</div>
 		
 		<!-- svelte-ignore a11y-autofocus -->
-		 	
+			
 		
 	</div>
 </dialog>

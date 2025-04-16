@@ -1,8 +1,9 @@
-<script >
-// @ts-nocheck
+<script lang="ts">
+
+export const ssr = false;
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { user, isLoggedIn } from '$lib/stores';
+  import { isLoggedIn, loadingUser, user } from '$lib/stores';
   import BrandSide from "$lib/components/BrandSide.svelte";
   import Sidebar from "$lib/components/ui/Sidebar.svelte";
   import MenuLateral from "$lib/components/MenuLateral.svelte";
@@ -11,17 +12,18 @@
 
   let initialLoad = false;
 
-  onMount(() => {
-    // observar si el usuario no está logueado 
-    const unsub = isLoggedIn.subscribe((loggedIn) => {
-      if (!initialLoad && !loggedIn) {
-        goto('/');
-      }
-      initialLoad = true;
-    });
 
-    return () => unsub();
+onMount(() => {
+  const unsubscribe = isLoggedIn.subscribe((loggedIn) => {
+    if (!initialLoad && !loggedIn && !loadingUser) {
+      goto('/'); // redirecciona al home si no hay sesión
+    }
+    initialLoad = true;
   });
+
+  return () => unsubscribe();
+});
+
 </script>
 
 <div class="app h-screen ">
@@ -29,7 +31,7 @@
     <BrandSide />
     <div class="h-16 flex-1 flex icb px-8 lg:px-16">
       <Time />
-      <div>{$user.email}</div>
+      <div>{$user?.email}</div>
       <ButtonLogOut>Salir</ButtonLogOut>
     </div>
     

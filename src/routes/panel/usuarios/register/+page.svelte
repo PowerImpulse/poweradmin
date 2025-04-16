@@ -1,79 +1,289 @@
 <script lang="ts">
-    import { collection, addDoc } from "firebase/firestore";
-    import { getAuth, createUserWithEmailAndPassword} from "firebase/auth"; 
-    import { dbUsers } from "$lib/client"; 
-    import SectionName from "$lib/components/ui/SectionName.svelte";
+	import { collection, addDoc } from 'firebase/firestore';
+	import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+	import { dbUsers } from '$lib/client';
+	import SectionName from '$lib/components/ui/SectionName.svelte';
+	import { BarLoader } from 'svelte-loading-spinners';
+	import Modal from '$lib/components/ui/Modal.svelte'; // Tu componente Modal
 
-    const usersFb = collection(dbUsers, "users");
-    const auth = getAuth(); // Inicializar Firebase Auth
+	const usersFb = collection(dbUsers, 'users');
+	const auth = getAuth();
 
-    let email = "Jhon@me.com";
-    let username = "Jhon Do ";
-    let role = "Técnico";
-    let password = "UnjsdK44@";
-    let error = "";
+	// --- State Variables ---
+	let email = 'jean@uno.com';
+	let username = '';
+	let role = 'admin';
+	let password = 'Jedax25+';
+	let error = '';
+	let successMessage = '';
+	let isLoading = false; // Para controlar el BarLoader
+	let showModalState = false; // Variable para controlar el modal (usaremos bind:)
 
-    const crearUsuario = async () => {
-        if (email.trim() !== "" && username.trim() !== "" && role.trim() !== "" && password.trim() !== "") {
-            try {
-                // Crear usuario en Firebase Authentication
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+	// ... (resto de variables de estado: lugar_ciudad, nombre_completo, etc. sin cambios)
+    let lugar_ciudad = 'Guadalajara';
+    let lugar_estado = 'Jalisco';
+    let nombre_completo = 'Jean Reynoso ';
+    let estado_civil = 'soltero';
+    let edad: number | null = null;
+    let genero = 'masculino';
+    let rfc = 'REVJ750603JX3';
+    let curp = 'REVJ750603HDFYGN00';
+    let domicilio_calle = 'las Vegas';
+    let domicilio_numero_ext = '500';
+    let domicilio_numero_int = '';
+    let domicilio_colonia = 'Ahuehuete';
+    let domicilio_cp = '52943';
+    let fecha_ingreso: string = '';
+    let puesto = '1';
+    let dias_laborables: string[] = [''];
 
-                // Crear usuario en Firestore
-                await addDoc(usersFb, {
-                    email: email,
-                    username: username,
-                    role: role,
-                    isBlocked: false,
-                    created_at: new Date(),
-                    uid: user.uid // Usar el uid del usuario creado en Firebase Authentication
-                });
 
-                error = "";
-            } catch (e: any) {
-                error = `Error al crear usuario: ${e.message}`;
-            }
-        } else {
-            error = "Todos los campos son obligatorios";
+	// --- Functions ---
+	const agregarDiaLaborable = () => {
+		dias_laborables = [...dias_laborables, ''];
+	};
+
+	const quitarDiaLaborable = (index: number) => {
+		if (dias_laborables.length > 1) {
+			dias_laborables = dias_laborables.filter((_, i) => i !== index);
+		}
+	};
+
+	const resetFormFields = () => {
+		// Resetear solo los campos necesarios
+		email = '';
+		username = '';
+		role = 'tecnico'; // O el valor por defecto que prefieras
+		password = '';
+		nombre_completo = '';
+		estado_civil = 'soltero';
+		edad = null;
+		genero = 'masculino';
+		rfc = '';
+		curp = '';
+		domicilio_calle = '';
+		domicilio_numero_ext = '';
+		domicilio_numero_int = '';
+		domicilio_colonia = '';
+		domicilio_cp = '';
+		fecha_ingreso = '';
+		puesto = '';
+		dias_laborables = [''];
+		// No reseteamos lugar_ciudad y lugar_estado si son valores más fijos
+	};
+
+	const crearUsuario = async () => {
+		// 1. Resetear estado previo y activar loader
+		isLoading = true;
+		// showModalState = false; // No es necesario resetear aquí si el modal lo hace solo al cerrar
+		error = '';
+		successMessage = '';
+
+		// 2. Validación básica (puedes añadir más aquí)
+		if (email.trim() === "" || username.trim() === "" || role.trim() === "" || password.trim() === "") {
+            error = "Los campos de acceso (email, nombre de usuario, rol, contraseña) son obligatorios";
+            isLoading = false;
+            showModalState = true; // Mostrar modal con el error
+            return; // Detener ejecución
         }
-        email = "";
-        username = "";
-        role = "Técnico";
-        password = "";
-    };
 
-   
 
+		try {
+			// 3. Crear usuario en Firebase Authentication
+			const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+			const user = userCredential.user;
+
+			// 4. Crear usuario en Firestore
+			await addDoc(usersFb, {
+				email: email,
+				username: username,
+				role: role,
+				isBlocked: false,
+				created_at: new Date(),
+				uid: user.uid,
+				lugar_ciudad: lugar_ciudad,
+				lugar_estado: lugar_estado,
+				nombre_completo: nombre_completo,
+				estado_civil: estado_civil,
+				edad: edad,
+				genero: genero,
+				rfc: rfc,
+				curp: curp,
+				domicilio: {
+					calle: domicilio_calle,
+					numero_ext: domicilio_numero_ext,
+					numero_int: domicilio_numero_int,
+					colonia: domicilio_colonia,
+					cp: domicilio_cp
+				},
+				fecha_ingreso: fecha_ingreso,
+				puesto: puesto,
+				dias_laborables: dias_laborables.filter((dia) => dia.trim() !== '')
+			});
+
+			// 5. Éxito: Establecer mensaje y limpiar formulario
+			successMessage = '¡Usuario creado exitosamente!';
+			resetFormFields(); // Limpiar campos solo en caso de éxito
+		} catch (e: any) {
+			// 6. Error: Establecer mensaje de error
+			console.error('Error al crear usuario:', e); // Loguear error completo
+            if (e.code === 'auth/email-already-in-use') {
+                error = 'El correo electrónico ya está en uso.';
+            } else if (e.code === 'auth/weak-password') {
+                error = 'La contraseña es demasiado débil (debe tener al menos 6 caracteres).';
+            } else {
+                 error = `Error al crear usuario: ${e.message}`;
+            }
+		} finally {
+			// 7. Finalizar: Desactivar loader y solicitar mostrar modal
+			isLoading = false;
+			showModalState = true; // Poner a true para que el modal se muestre
+		}
+	};
+
+    // Ya NO necesitamos la función closeModal explícita aquí
+	// const closeModal = () => {
+	//     showModalState = false;
+	// }
 </script>
 
-<SectionName Title="Crear Nuevo Usuario" >
+<!-- Loader: Se muestra solo cuando isLoading es true -->
+{#if isLoading}
+	<div class="fixed top-0 left-0 w-full z-50">
+		<BarLoader color="#2563eb" size="100" unit="%" />
+	</div>
+{/if}
 
-<div class="panel">
-    <div class="col">
-        <form class="crearnuevo grid gap-4 ">
-            <input type="text" placeholder="Correo electrónico" bind:value={email} />
-            <input type="text" placeholder="Nombre de usuario" bind:value={username} />
-            <input type="password" placeholder="Contraseña" bind:value={password} /> <!-- Campo para la contraseña -->
-            <select bind:value={role}>
-                <option value="Admin">  Super Admin</option>
-                <option value="Admin">  Admin</option>
-                <option value="Técnico">Técnico</option>
-            </select>
-        <div> 
-            <button on:click={crearUsuario} class="p-4 bg-blue-8 hover:bg-sky-6 border-1   text-white ">Agregar Usuario</button>
-        </div>
-        </form>
-       </div>
-    
-</div>
+<!-- Modal: Usamos bind:showModal con la variable de estado -->
+<!-- El contenido dentro del <Modal> irá al slot por defecto -->
+<Modal bind:showModal={showModalState}>
+	{#if error}
+		<div class="p-4 mb-4 bg-red-100 border border-red-400 text-red-700 rounded">
+			<h4 class="font-bold">Error</h4>
+			<p>{error}</p>
+		</div>
+	{/if}
+	{#if successMessage}
+		<div class="p-4 mb-4 bg-green-100 border border-green-400 text-green-700 rounded">
+			<h4 class="font-bold">Éxito</h4>
+			<p>{successMessage}</p>
+		</div>
+	{/if}
+    <!-- No necesitas añadir un botón de cierre aquí, tu modal ya tiene uno -->
+</Modal>
 
+<SectionName Title="Crear Nuevo Usuario">
+	<div class="panel">
+		<div class="col">
+			<!-- Deshabilitar el formulario mientras carga -->
+			<fieldset disabled={isLoading} class="crearnuevo grid gap-4">
+				<h3 class="text-xl">Datos de Acceso</h3>
+				<input type="email" placeholder="Correo electrónico" bind:value={email} required />
+				<input type="text" placeholder="Nombre de usuario" bind:value={username} required />
+				<input type="password" placeholder="Contraseña" bind:value={password} required />
+				<select bind:value={role} required>
+                    <option value="superadmin">Super Admin</option>
+					<option value="admin">Admin</option>
+					<option value="tecnico">Técnico</option>
+				</select>
+
+				<h3 class="text-xl">Lugar y Fecha</h3>
+				<input type="text" placeholder="Ciudad" bind:value={lugar_ciudad} />
+				<input type="text" placeholder="Estado" bind:value={lugar_estado} />
+
+				<h3 class="text-xl">Datos del Trabajador</h3>
+				<div class="grid lg:grid-cols-2 gap-12">
+					<div class="grid gap-6">
+                        <input type="text" placeholder="Nombre Completo" bind:value={nombre_completo} />
+                        <select bind:value={estado_civil}>
+                            <option value="soltero">Soltero</option>
+                            <option value="casado">Casado</option>
+                            <option value="divorciado">Divorciado</option>
+                            <option value="viudo">Viudo</option>
+                            <option value="union_libre">Unión Libre</option>
+                        </select>
+                        <input type="number" placeholder="Edad" bind:value={edad} min="18" />
+                        <select bind:value={genero}>
+                            <option value="masculino">Masculino</option>
+                            <option value="femenino">Femenino</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                        <input type="text" placeholder="RFC" bind:value={rfc} />
+                        <input type="text" placeholder="CURP" bind:value={curp} />
+                    </div>
+
+                    <div class="grid gap-6">
+                        <input type="text" placeholder="Calle" bind:value={domicilio_calle} />
+                        <input type="text" placeholder="Número Exterior" bind:value={domicilio_numero_ext} />
+                        <input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_numero_int} />
+                        <input type="text" placeholder="Colonia" bind:value={domicilio_colonia} />
+                        <input type="text" placeholder="Código Postal" bind:value={domicilio_cp} />
+                    </div>
+				</div>
+
+				<h3 class="text-xl">Relación Laboral</h3>
+				<input type="date" placeholder="Fecha de Ingreso" bind:value={fecha_ingreso} />
+                <label for="puesto" class="block text-sm font-medium text-gray-700">Puesto / Cargo *</label>
+                 <select id="puesto" bind:value={puesto} required class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled={isLoading}>
+                    <option value="1">Técnico de servicio AA</option> <option value="2">Técnico de servicio UPS</option> <option value="3">Coordinador de servicio AA</option>
+                    <option value="4">Coordinador de servicio UPS</option> <option value="5">Almacenista/ayudante general</option> <option value="6">Logística y atención al cliente</option>
+                    <option value="7">Ventas</option> <option value="8">Coordinador de ventas</option> <option value="9">Técnico servicio plantas emergencia</option>
+                    <option value="10">Coordinador servicio plantas emergencia</option> <option value="11">Recepción</option> <option value="12">Recursos humanos</option>
+                    <option value="13">Instalador</option> <option value="14">Asistente administrativo</option>
+                </select>
+
+				<h3 class="text-xl">Días Laborables</h3>
+				{#each dias_laborables as dia, index (index)}
+				<div class="flex items-center gap-2">
+					<input type="text" placeholder="Día Laborable (ej. Lunes 9-18)" bind:value={dias_laborables[index]} />
+					{#if dias_laborables.length > 1}
+					<button
+						type="button"
+						on:click={() => quitarDiaLaborable(index)}
+						class="bg-red-500 text-white p-2 rounded hover:bg-red-700"
+						>-</button
+					>
+					{/if}
+				</div>
+				{/each}
+				<button
+					type="button"
+					on:click={agregarDiaLaborable}
+					class="bg-green-500 text-white p-2 rounded w-max hover:bg-green-700"
+					>Agregar Día</button
+				>
+
+				<div>
+					<button
+						type="button"
+						on:click={crearUsuario}
+						disabled={isLoading}
+						class="p-4 bg-blue-600 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed border-1 text-white rounded"
+					>
+						{#if isLoading}
+							Creando...
+						{:else}
+							Crear Usuario
+						{/if}
+					</button>
+				</div>
+			</fieldset>
+			<!-- Fin del fieldset -->
+		</div>
+	</div>
 </SectionName>
 
 <style>
-  
-  input, select{
-    --at-apply:  p-4 border-2 border-zinc-5 text-4  ;
-   
-  }
+	input,
+	select {
+		--at-apply: p-4 border-2 border-zinc-200 text-base rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
+	}
+	fieldset:disabled input,
+	fieldset:disabled select,
+	fieldset:disabled button {
+		--at-apply: bg-gray-100 cursor-not-allowed opacity-70;
+	}
+	.fixed.top-0.left-0.w-full.z-50 {
+		/* background-color: rgba(255, 255, 255, 0.5); */ /* Fondo semitransparente opcional para el loader */
+	}
 </style>

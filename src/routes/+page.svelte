@@ -1,13 +1,12 @@
 <script lang="ts">
-  //@ts-ignore
   import { goto } from '$app/navigation';
   import { auth } from '$lib/client';
   import { signInWithEmailAndPassword } from 'firebase/auth';
   import { isLoggedIn, loadingUser } from '$lib/stores';
   import { BarLoader } from "svelte-loading-spinners";
 
-  let email = '';
-  let password = '';
+  let email = 'edgar.carmona@powerimpulse.com.mx';
+  let password = 'cdASfo$f$l}2;-za';
   let errorMessage = '';
 
   const login = async () => {
