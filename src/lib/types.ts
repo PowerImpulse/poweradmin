@@ -13,6 +13,40 @@ interface Usuario {
   };
 }
 
+type DatosUsuario = {
+  created_at: string;
+  curp: string;
+  dias_laborables: string[];
+  domicilio: {
+    calle: string;
+    colonia: string;
+    cp: string;
+    estado: string;
+    numero_ext: string;
+    numero_int: string;
+  };
+  edad: number;
+  email: string;
+  estado_civil: string;
+  fecha_ingreso: string;
+  genero: string;
+  isBlocked: boolean;
+  lugar_ciudad: string;
+  lugar_fecha: string;
+  nombre_completo: string;
+  puesto: string;
+  rfc: string;
+  role: string;
+  uid: string;
+  username: string;
+  documents?: { 
+    ineBack?: string;
+    ineFront?: string;
+    waiver?: string;
+    workerPhoto?: string;
+  };
+};
+
 interface Asistencia {
   uid: string;
   userId: string;
@@ -62,4 +96,4 @@ interface Equipo {
   isBlocked:boolean
 }
 
-export type { Usuario, Asistencia, Equipo };
+export type { Usuario, Asistencia, Equipo, DatosUsuario };

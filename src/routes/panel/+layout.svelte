@@ -16,7 +16,7 @@ export const ssr = false;
 onMount(() => {
   const unsubscribe = isLoggedIn.subscribe((loggedIn) => {
     if (!initialLoad && !loggedIn && !loadingUser) {
-      goto('/'); // redirecciona al home si no hay sesión
+      goto('/'); 
     }
     initialLoad = true;
   });

@@ -13,7 +13,7 @@
 	// --- State Variables ---
 	let email = 'jean@uno.com';
 	let username = '';
-	let role = 'admin';
+	let role = 'Técnico';
 	let password = 'Jedax25+';
 	let error = '';
 	let successMessage = '';
@@ -25,16 +25,16 @@
     let lugar_fecha = '5 de Mayo de 2025';
     let nombre_completo = 'Jean Reynoso ';
     let estado_civil = 'soltero';
-    let edad: number | null = null;
+    let edad: number | null = 30;
     let genero = 'masculino';
     let rfc = 'REVJ750603JX3';
     let curp = 'REVJ750603HDFYGN00';
-    let domicilio_calle = 'las Vegas';
-    let domicilio_referencia = '500';
-	let domicilio_colonia = 'Ahuehuete';
+    let domicilio_calle = 'Acolman 100';
+    let domicilio_referencia = 'Casa blanca';
+	let domicilio_colonia = 'Ahuehuetes';
 	let domicilio_cp = '52943';
-    let domicilio_municipio = '';
-	let domicilio_estado = '';
+    let domicilio_municipio = 'Guadalajara';
+	let domicilio_estado = 'Jalisco';
     let fecha_ingreso: string = '';
     let puesto = '1';
     let dias_laborables: string[] = [''];
@@ -55,12 +55,12 @@
 		// Resetear solo los campos necesarios
 		email = '';
 		username = '';
-		role = 'tecnico'; // O el valor por defecto que prefieras
+		role = ''; 
 		password = '';
 		nombre_completo = '';
-		estado_civil = 'soltero';
+		estado_civil = '';
 		edad = null;
-		genero = 'masculino';
+		genero = '';
 		rfc = '';
 		curp = '';
 		domicilio_calle = '';
@@ -122,7 +122,7 @@
 				},
 				fecha_ingreso: fecha_ingreso,
 				puesto: puesto,
-				dias_laborables: dias_laborables.filter((dia) => dia.trim() !== '')
+				dias_laborables: dias_laborables.filter((dia) => dia.trim() !== '').map(dia => dia.trim())
 			});
 
 			// 5. Éxito: Establecer mensaje y limpiar formulario
@@ -139,16 +139,13 @@
                  error = `Error al crear usuario: ${e.message}`;
             }
 		} finally {
-			// 7. Finalizar: Desactivar loader y solicitar mostrar modal
+			
 			isLoading = false;
-			showModalState = true; // Poner a true para que el modal se muestre
+			showModalState = true; 
 		}
 	};
 
-    // Ya NO necesitamos la función closeModal explícita aquí
-	// const closeModal = () => {
-	//     showModalState = false;
-	// }
+  
 </script>
 
 <!-- Loader: Se muestra solo cuando isLoading es true -->
@@ -180,7 +177,7 @@
 	<div class="panel">
 		<div class="col">
 			<!-- Deshabilitar el formulario mientras carga -->
-			<fieldset disabled={isLoading} class="crearnuevo grid gap-4 ">
+			<fieldset disabled={isLoading} class="crearnuevo grid gap-4 pb-12 ">
 				<TitleArea title="Datos de Acceso" class="pt-0" />
 				<div class="grid lg:grid-cols-2 gap-6">
 					<label>
@@ -189,7 +186,7 @@
 					</label>
 					<label>
 						Nombre de usuario
-						<input type="text" placeholder="Nombre de usuario" bind:value={username} required />
+						<input type="text" placeholder="Nombre de usuario" bind:value={username}  />
 					</label>
 					<label>
 						Contraseña
@@ -199,8 +196,9 @@
 						Asignar Rol
 						<select bind:value={role} required>
 							<option value="superadmin">Super Admin</option>
+							<option value="tecnico" selected>Técnico</option>
 							<option value="admin">Admin</option>
-							<option value="tecnico">Técnico</option>
+							
 						</select>
 					</label>
 				</div>
@@ -271,7 +269,7 @@
 					</label>
 					<label>
 						Estado
-						<input type="text" placeholder="Número Interior (opcional)" bind:value={domicilio_estado} />
+						<input type="text" placeholder="Escribe un Estado" bind:value={domicilio_estado} />
 					</label>
 				</div>
 
@@ -288,7 +286,7 @@
 					class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 					disabled={isLoading}
 				>
-					<option value="Técnico de servicio AA">Técnico de servicio AA</option>
+					<option value="Técnico de servicio AA" selected>Técnico de servicio AA</option>
 					<option value="Técnico de servicio UPS">Técnico de servicio UPS</option>
 					<option value="Coordinador de servicio AA">Coordinador de servicio AA</option>
 					<option value="Coordinador de servicio UPS">Coordinador de servicio UPS</option>
@@ -309,7 +307,7 @@
 					<div class="flex items-center gap-2">
 						<input
 							type="text"
-							placeholder="Día Laborable (ej. Lunes 9-18)"
+							placeholder="Día Laborable (ej. Lunes a Viernes de 09:00 a 18:00)"
 							bind:value={dias_laborables[index]}
 						/>
 						{#if dias_laborables.length > 1}
