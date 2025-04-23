@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
-  import { getAuth, createUserWithEmailAndPassword} from "firebase/auth";
+    // componente src/lib/usuarios/UsuariosGridCraft.svelte
+  import { collection, onSnapshot, doc, updateDoc, deleteDoc} from "firebase/firestore";
+  import { getAuth} from "firebase/auth";
   import { dbUsers } from "$lib/client";
   import { Grid, GridFooter, type PagingData, type GridColumn, type GridFilter } from '@mediakular/gridcraft'; 
   import UsuarioEmail from "$lib/usuarios/UsuarioEmail.svelte";
   import AccionesUsuario from "$lib/usuarios/AccionesUsuario.svelte";
   import type { Usuario } from '$lib/types' // TIPOS TS
-  import Modal from "$lib/components/ui/Modal.svelte";
   import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
 
 
@@ -143,14 +143,6 @@ $: filters = [
   <GridFooter bind:paging />
 {/if}
 
-
-
-
-
 <style>
-  .error {
-      color: red;
-  }
-
-  
+  .error { color: red;}
 </style>
