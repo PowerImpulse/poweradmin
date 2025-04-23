@@ -41,13 +41,13 @@
     <span class="bg-red-6">Eliminar</span>
   </button>
 
-  <!-- Botón Editar (funcionalidad futura) -->
+  <!-- Botón Editar (funcionalidad futura)
   <button title="Editar">
     <IbmEloMethodComposer class="usericon stroke-blue" />
     <span class="bg-blue-8">Editar</span>
   </button>
+ -->
 
-  <!-- ***** CAMBIO AQUÍ: Convertir el botón "Ver Perfil" en un enlace ***** -->
   <a href={`/panel/usuarios/${value.uid}`} title="Ver perfil" class="button-like">
     <Identification class="usericon stroke-zinc-8 stroke-1" />
     <span class="bg-blue">Ver Perfil</span>

@@ -7,6 +7,7 @@
     import { dbUsers } from '$lib/client';
     import { tick } from 'svelte';
     import { BarLoader } from "svelte-loading-spinners"; // <-- Importar BarLoader
+  import SectionName from '$lib/components/ui/SectionName.svelte';
   
     export let data: PageData;
   
@@ -154,8 +155,8 @@
     }
   
   </script>
-  
-  <div class="perfil-usuario p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+  <SectionName Title={usuario.username}>
+  <div class="perfil-usuario p-6 bg-white ">
     <div class="flex justify-between items-start mb-6 pb-4 border-b">
       <div>
         <h1 class="text-2xl font-semibold">Perfil de Usuario</h1>
@@ -355,6 +356,8 @@
       <p class="text-center text-red-500">No se pudieron cargar los datos del usuario.</p>
     {/if}
   </div>
+
+</SectionName>
   
   <style>
     /* Estilos base con UnoCSS */
