@@ -1,5 +1,6 @@
 <script lang="ts">
  import type { Usuario } from '$lib/types';
+  import { TrashCan } from 'carbon-icons-svelte';
 
 
 export let value: Usuario;
@@ -20,6 +21,7 @@ export let value: Usuario;
   }
 </script>
 
+<div class="flex gap-4">
 <button class={isBlocked ? 'Desbloquear' : 'Bloquear'} on:click|preventDefault={handleBloquearDesbloquear}>
   {isBlocked ? 'Desbloquear' : 'Bloquear'}
 </button>
@@ -31,6 +33,12 @@ export let value: Usuario;
   if (confirm('¿Estás seguro de eliminar este usuario?')) {
     handleEliminar();
   }
-}}>
-  Eliminar
+}} title="Eliminar Usuario">
+  <TrashCan />
 </button>
+
+<button >
+  Ver Perfil
+</button>
+</div>
+
