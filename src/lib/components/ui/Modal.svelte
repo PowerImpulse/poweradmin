@@ -15,24 +15,26 @@
 >
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div on:click|stopPropagation>
-		<button class="text-sm text-center" autofocus on:click={() => dialog.close()}>X Cerrar</button>
+		<button class="text-sm text-center" on:click={() => dialog.close()}>X Cerrar</button>
 		<slot name="header" />
 		<div>
 			<slot />
 		</div>
 		
 		<!-- svelte-ignore a11y-autofocus -->
-		 	
+			
 		
 	</div>
 </dialog>
 
 <style>
 	dialog {
-	
+		/* Añade esta línea */
+		margin: auto; 
 		border-radius: 0.2em;
 		border: none;
 		padding: 0;
+		/* Tus clases w-80% y lg:w-40% ya definen el ancho, lo cual es necesario para que margin: auto funcione horizontalmente */
 	}
 	dialog::backdrop {
 		background: rgba(0, 0, 0, 0.3);

@@ -13,6 +13,40 @@ interface Usuario {
   };
 }
 
+type DatosUsuario = {
+  created_at: string;
+  curp: string;
+  dias_laborables: string[];
+  domicilio: {
+    calle: string;
+    colonia: string;
+    cp: string;
+    estado: string;
+    numero_ext: string;
+    numero_int: string;
+  };
+  edad: number;
+  email: string;
+  estado_civil: string;
+  fecha_ingreso: string;
+  genero: string;
+  isBlocked: boolean;
+  lugar_ciudad: string;
+  lugar_fecha: string;
+  nombre_completo: string;
+  puesto: string;
+  rfc: string;
+  role: string;
+  uid: string;
+  username: string;
+  documents?: { 
+    ineBack?: string;
+    ineFront?: string;
+    waiver?: string;
+    workerPhoto?: string;
+  };
+};
+
 interface Asistencia {
   uid: string;
   userId: string;
@@ -50,7 +84,7 @@ interface Asistencia {
 
 interface Equipo {
   capacidad_500: string;
-  created_at?: Timestamp;
+  created_at: Date;
   empresa_501: string;
   grupo: string;
   inactivo: boolean;
@@ -59,6 +93,7 @@ interface Equipo {
   no_serie_500: string;
   ref_ubic: string;
   tipo_de_equipo_500: string;
+  isBlocked:boolean
 }
 
-export type { Usuario, Asistencia, Equipo };
+export type { Usuario, Asistencia, Equipo, DatosUsuario };

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, getDoc, FirestoreError } from "firebase/firestore";
-  import { getAuth, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+    // componente src/lib/usuarios/UsuariosGridCraft.svelte
+  import { collection, onSnapshot, doc, updateDoc, deleteDoc} from "firebase/firestore";
+  import { getAuth} from "firebase/auth";
   import { dbUsers } from "$lib/client";
   import { Grid, GridFooter, type PagingData, type GridColumn, type GridFilter } from '@mediakular/gridcraft'; 
   import UsuarioEmail from "$lib/usuarios/UsuarioEmail.svelte";
   import AccionesUsuario from "$lib/usuarios/AccionesUsuario.svelte";
   import type { Usuario } from '$lib/types' // TIPOS TS
-  import Modal from "$lib/components/ui/Modal.svelte";
   import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
 
 
@@ -16,64 +16,25 @@
   let usuarios: Usuario[] = [];
   let selectedRows: Usuario[] = [];
   let loading = true;
-  let email = "Juan1@me.com";
-  let username = "Juan1 Me";
-  let role = "Técnico";
-  let password = "UnjsdK44@";
   let error = "";
 
-//   onSnapshot(usersFirebase, (querySnapshot) => {
-//       let listaUsuarios: Usuario[] = [];
-//       querySnapshot.forEach((doc) => {
-//           let usuario = { ...doc.data(), uid: doc.id } as Usuario;
-//           listaUsuarios.push(usuario);
-//       });
-//       usuarios = listaUsuarios;
-//       loading = false;
-//   });
 
 onSnapshot(usersFirebase, (querySnapshot) => {
     let listaUsuarios: Usuario[] = [];
     querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data && data.email && data.username && data.role !== undefined) { // Validación básica
+        if (data && data.email && data.username && data.role !== undefined) { 
             let usuario = { ...data, uid: doc.id } as Usuario;
             listaUsuarios.push(usuario);
         } else {
-            console.warn("Documento inválido:", doc.id, data); // Registra documentos con estructura incorrecta
+            console.warn("Documento inválido:", doc.id, data); 
         }
     });
     usuarios = listaUsuarios;
     loading = false;
 });
 
-  const crearUsuario = async () => {
-      if (email.trim() !== "" && username.trim() !== "" && role.trim() !== "" && password.trim() !== "") {
-          try {
-              const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-              const user = userCredential.user;
 
-              await addDoc(usersFirebase, {
-                  email: email,
-                  username: username,
-                  role: role,
-                  isBlocked: false,
-                  created_at: new Date(),
-                  uid: user.uid
-              });
-
-              error = "";
-          } catch (e: any) {
-              error = `Error al crear usuario: ${e.message}`;
-          }
-      } else {
-          error = "Todos los campos son obligatorios";
-      }
-      email = "";
-      username = "";
-      role = "";
-      password = "";
-  };
 
   const bloquearDesbloquearUsuario = async (usuario: Usuario) => {
       await updateDoc(doc(dbUsers, "users", usuario.uid), {
@@ -83,7 +44,6 @@ onSnapshot(usersFirebase, (querySnapshot) => {
 
   const eliminarUsuario = async (uid: string) => {
     try {
-        // Elimina el usuario de Firestore
         await deleteDoc(doc(dbUsers, "users", uid));
     } catch (e: any) {
         error = `Error al eliminar usuario: ${e.message}`;
@@ -92,21 +52,11 @@ onSnapshot(usersFirebase, (querySnapshot) => {
 
 
 
-
-
-  const teclaPresionada = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-          crearUsuario();
-      }
-  };
-
-
- 
-
   let columns: GridColumn<Usuario>[] = [
       { 
           key: 'infoUser', 
           title: 'Usuario', 
+          //@ts-ignore
           renderComponent: UsuarioEmail, 
           accessor: (row) => ({ email: row.email, username: row.username }),
           sortValue: (row: Usuario) => {
@@ -121,11 +71,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
           title: 'Acciones',
           sortable: false,
           accessor: (row) => {
-            //   return {
-            //       value: row,
-            //       onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
-            //       onEliminar: () => eliminarUsuario(row.uid),
-            //   }
+         
             return {
                 value: row,
                 onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
@@ -136,6 +82,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
             };
             
           },
+          //@ts-ignore
           renderComponent: AccionesUsuario,
       },
   ];
@@ -153,8 +100,9 @@ onSnapshot(usersFirebase, (querySnapshot) => {
   let textSearch = "";
   let filters: GridFilter[];
 
-
+// @ts-ignore
 $: filters = [ 
+    // busca solo en usuario
   {
     key: "text-search",
     columns: ["infoUser", "role", "isBlocked"],
@@ -175,16 +123,15 @@ $: filters = [
 
 </script>
 
-<div class="bar-actions pb-16">
-    <div class="w-200 ">
+<div class="bar-actions pb-16 grid md:grid-cols-3 gap-6">
+    <div class="grid-col-span-2 ">
         <input class="w-160 p-1" type="text" placeholder="Filtra por usuario o email" bind:value={textSearch} />
     </div>  
     
-    <div class="">
-        <button class=" rounded-full " on:click={() => (showModal = true)}> <AddLarge size={24} /> </button> 
+    <div class="flex md:justify-end ">
+        <a href="/panel/usuarios/register" class=" rounded-full flex ic gap-4 "> <AddLarge />  Registrar Empleado</a>
     </div>
     
-
 </div>
 
 
@@ -192,39 +139,10 @@ $: filters = [
   <p>Cargando...</p>
 {:else}
 <p class="error">{error}</p>
-  <Grid data={usuarios} {paging} bind:columns bind:selectedRows  bind:filters />
+  <Grid data={usuarios} bind:paging={paging} bind:columns bind:selectedRows  bind:filters />
   <GridFooter bind:paging />
 {/if}
 
-<Modal bind:showModal>
-    <h3 slot="header">
-		Crear nuevo Usuario
-	</h3>
-    <div class="flex flex-col gap-4 p-4 lg:p-8">
-        <input type="text" placeholder="Correo electrónico" bind:value={email} />
-        <input type="text" placeholder="Nombre de usuario" bind:value={username} />
-        <input type="password" placeholder="Contraseña" bind:value={password} />
-        <select bind:value={role}>
-          <option value="SuperAdmin">Super Admin</option>
-            <option value="Admintrador">Admin</option>
-            <option value="Técnico">Técnico</option>
-        </select>
-        <button on:click={crearUsuario}>Agregar</button>
-        <p class="error">{error}</p>
-      </div>
-</Modal>
-
-<svelte:window on:keydown={teclaPresionada} />
-
 <style>
-  .error {
-      color: red;
-  }
-  input, select{
-    --at-apply: w-full p-2 border-0 border-2 border-slate-2;
-  }
-  .bar-actions{
-    display: flex;
-    justify-content: space-between;
-  }
+  .error { color: red;}
 </style>

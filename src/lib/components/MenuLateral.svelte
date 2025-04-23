@@ -28,7 +28,9 @@ function toggleSubMenu() {
       <!-- Submenú -->
       <ul class:open={subMenuOpen} class="submenu">
         <li ><SideLink route="/panel/usuarios" > Lista de usuarios</SideLink></li>
-        <li ><SideLink route="/panel/usuarios/new" >Agregar nuevo</SideLink> </li>
+        <li ><SideLink route="/panel/usuarios/new" >Gestionar Admin</SideLink> </li>
+        <li ><SideLink route="/panel/usuarios/register" >Registrar Empleado</SideLink> </li>
+      
       </ul>
     </li>
     <SideLink route="/panel/equipos" > <span><ConnectRecursive size={16} /></span>EQUIPOS </SideLink>

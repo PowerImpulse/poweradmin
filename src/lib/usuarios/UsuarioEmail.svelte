@@ -1,5 +1,5 @@
 <script lang="ts">
-
+ // src/lib/usuarios/UsuarioEmail.svelte
    
    export let email: string;
    export let username: string;

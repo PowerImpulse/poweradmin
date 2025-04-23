@@ -1,159 +1,163 @@
-@import url(./normalize.css);
-:root{
+/* @import url(./normalize.css);  */
+:root {
+  --br-10: #e9eff9;
+  --br-20: #d4e0f2;
+  --br-30: #bed0eb;
+  --br-40: #a9c1e4;
+  --br-50: #95b1dd;
+  --br-60: #80a2d5;
+  --br-70: #6c92cd;
+  --br-80: #5783c5;
+  --br-90: #4374bd;
+  --br-100: #3d5ba9;
+  --br-150: #27569d;
+  --br-200: #1f4886;
+  --br-300: #003c77;
+  --br-400: #122e59;
+  --br-500: #0b2244;
+  --br-600: #061630;
+  --br-700: #020b1d;
+  --br-800: #01030c;
+  --br-900: #000002;
 
-    --br-10   : #E9EFF9;
-    --br-20   : #D4E0F2;
-    --br-30   : #BED0EB;
-    --br-40   : #A9C1E4;
-    --br-50   : #95B1DD;
-    --br-60   : #80A2D5;
-    --br-70   : #6C92CD;
-    --br-80   : #5783C5;
-    --br-90   : #4374BD;
-    --br-100  : #3D5BA9;
-    --br-150  : #27569D; 
-    --br-200  : #1F4886;
-    --br-300  : #003C77;
-    --br-400  : #122E59;
-    --br-500  : #0B2244;
-    --br-600  : #061630;
-    --br-700  : #020B1D;
-    --br-800  : #01030C;
-    --br-900  : #000002;
-  
-    --gr-10 :#FEFEFE ;
-    --gr-20 :#F6F7F9 ;
-    --gr-30 :#EBEEF2  ;
-    --gr-40 :#D7DEE6  ;
-    --gr-30 :#BCC7D4  ;
-    --gr-50 :#9CABBE  ;
-    --gr-100 :#8493AD  ;
-    --gr-200 :#72809E  ;
-    --gr-300 :#66718F  ;
-    --gr-400 :#565E77  ;
-    --gr-500:#484E60 ;
-    --gr-700:#2F323C ;
-    --gr-900:#1E2936 ;
-  
-    /*COLORES  SISTEMA */    
-    --error:   #d6322c;
-    --success: #6f9e23;
-    --warning: #fcbf49;
-    --info:    #227cbd;
-  
-    --side-w: 240px;
+  --gr-10: #fefefe;
+  --gr-20: #f6f7f9;
+  --gr-30: #ebeef2;
+  --gr-40: #d7dee6;
+  --gr-30: #bcc7d4;
+  --gr-50: #9cabbe;
+  --gr-100: #8493ad;
+  --gr-200: #72809e;
+  --gr-300: #66718f;
+  --gr-400: #565e77;
+  --gr-500: #484e60;
+  --gr-700: #2f323c;
+  --gr-900: #1e2936;
 
-    --text-p: ;
-    --link-a: ;
-    --link-ah: ;
-    --bg-100: ;
-    --bg-200: ;
-    --bg-300: ;
-    
-        
-    }
+  /*COLORES  SISTEMA */
+  --error: #d6322c;
+  --success: #6f9e23;
+  --warning: #fcbf49;
+  --info: #227cbd;
 
+  --side-w: 240px;
 
-    
-    html {
- 
-      -webkit-text-size-adjust: 100%; /* 2 */
-      line-height: 1.15; /* 1 */
-    }
-    
-    body{
-      font-family: Montserrat, Arial, Helvetica, sans-serif;
-      scrollbar-color: var(--br-200) var(--br-10);
-  
-  }
-  
-  h1, h2, h3, h4, h5, h6{
-      font-weight: 500;
-      line-height: 1em;
-    
-  }
-  
-p{
-  font-size: 14px;
-  font-weight: 500;
+  --text-p: ;
+  --link-a: ;
+  --link-ah: ;
+  --bg-100: ;
+  --bg-200: ;
+  --bg-300: ;
 }
-a{
-  text-decoration: none;
-}
-li{
-  list-style: none;
-}
-  input, select{
-    padding: 8px;
-    border: 2px solid var(--gr-100);
-    font-size: 1rem;
-  }
-  
-  .ubication img{
-    width: 120px ; height: auto; object-fit: cover; aspect-ratio: 1 / 1;
-  }
-  td{
-    position: relative;
-  }
-  
-  .asistencia-img{
-      height: auto;
-      object-fit: cover;
-      aspect-ratio: 1 / 1;
-      transition: transform 0.3s ease-in-out;
-  }
-  .asistencia-img:hover{
-    transform: scale(6); /* Escalar al 600% */
-    transition: transform 0.3s ease-in-out;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 100;
-  }
-  .no-img{
-    display: grid;
-    width: 60px;
-    height: 60px;
-    background: #bbb;
-    font-size: 10px;
-    align-items: center;
-    text-align: center;
-  }
-  
 
-  
-  
-  @media (min-width: 480px) {
-    .barmedia {
-        background-color: var(--error);
-    }
-  
+html {
+  -webkit-text-size-adjust: 100%; /* 2 */
+  line-height: 1.15; /* 1 */
+}
+
+/* ***** RESET STYLES ******* */ 
+
+*, ::after, ::before, ::backdrop, ::file-selector-button { margin: 0; padding: 0; }
+*, ::after, ::before, ::backdrop, ::file-selector-button { box-sizing: border-box; border: 0 solid; }
+.google-map * { border-style: none; }
+img, svg, video, canvas, audio, iframe, embed, object { display: block; vertical-align: middle; }
+img, video { max-width: 100%; height: auto; }
+h1, h2, h3, h4, h5, h6 { font-weight: inherit; line-height: inherit; }
+ol, ul, menu { list-style: none; }
+a {text-decoration: none;}
+blockquote, q { quotes: none; } blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+table { border-collapse: collapse; border-spacing: 0; }
+
+/* ***** END RESET STYLES ******* */ 
+
+body {
+  font-family: Montserrat, Arial, Helvetica, sans-serif;
+  scrollbar-color: var(--br-200) var(--br-10);
+  padding: 0;
+  margin: 0;
+  font-optical-sizing: auto;
+  box-sizing: border-box;
+  line-height: 1;
+}
+.ubication img {
+  width: 120px;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}
+td {
+  position: relative;
+}
+
+.asistencia-img {
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  transition: transform 0.3s ease-in-out;
+}
+.asistencia-img:hover {
+  transform: scale(6); /* Escalar al 600% */
+  transition: transform 0.3s ease-in-out;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+.no-img {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  background: #bbb;
+  font-size: 10px;
+  align-items: center;
+  text-align: center;
+}
+
+@media (min-width: 480px) {
+  .barmedia {
+    background-color: var(--error);
   }
-  
-  @media (min-width: 768px) {
-    .barmedia {
-        background-color: var(--warning);
-    }
-  
+}
+
+@media (min-width: 768px) {
+  .barmedia {
+    background-color: var(--warning);
   }
-  
-  @media (min-width: 1024px) {
-    .barmedia {
-        background-color: var(--info);
-    }
+}
+
+@media (min-width: 1024px) {
+  .barmedia {
+    background-color: var(--info);
   }
-  
-  @media (min-width: 1280px) {
-    .barmedia {
-        background-color: var(--success);
-    }
-  
- 
+}
+
+@media (min-width: 1280px) {
+  .barmedia {
+    background-color: var(--success);
   }
-  
-  @media (min-width: 1536px) {
-    .barmedia {
-        background-color: forestgreen;
-    }
-  
+}
+
+@media (min-width: 1536px) {
+  .barmedia {
+    background-color: forestgreen;
   }
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  appearance: none;
+}
+
+form {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
