@@ -337,10 +337,21 @@
             <h2 class="text-xl font-medium mb-3 border-b pb-1 pt-4">Documentos</h2>
             {#if usuario.documents && Object.keys(usuario.documents).length > 0}
                <ul class="list-none space-y-2">
-                  {#if usuario.documents.ineFront}<li><a href={usuario.documents.ineFront} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> INE (Frente)</a></li>{/if}
-                  {#if usuario.documents.ineBack}<li><a href={usuario.documents.ineBack} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> INE (Reverso)</a></li>{/if}
-                  {#if usuario.documents.waiver}<li><a href={usuario.documents.waiver} target="_blank" rel="noopener noreferrer" class="link-documento"><DocumentPdf class="icon-doc"/> Waiver / Carta</a></li>{/if}
-                  {#if usuario.documents.workerPhoto}<li><a href={usuario.documents.workerPhoto} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> Foto Trabajador</a></li>{/if}
+                {#if usuario.documents.workerPhoto}<li>
+                  <img class="object-cover w-30 " src={usuario.documents.workerPhoto} alt={usuario.username} >
+                  <a href={usuario.documents.workerPhoto} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> Foto Trabajador</a>
+                </li>{/if}
+                  {#if usuario.documents.ineFront}<li>
+                    <img class="object-cover w-20 " src={usuario.documents.ineFront} alt={usuario.username} >
+                    <a href={usuario.documents.ineFront} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> INE (Frente)</a>
+                  </li>{/if}
+                  {#if usuario.documents.ineBack}<li>
+                    <img class="object-cover w-20 " src={usuario.documents.ineBack} alt={usuario.username} >
+                    <a href={usuario.documents.ineBack} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc"/> INE (Reverso)</a>
+                  </li>{/if}
+                  {#if usuario.documents.waiver}<li><a href={usuario.documents.waiver} target="_blank" rel="noopener noreferrer" class="link-documento"><DocumentPdf class="icon-doc"/>Descargar Carta</a>
+                  </li>{/if}
+                 
                 </ul>
             {:else}
               <p class="data-field text-gray-500">No hay documentos registrados.</p>
