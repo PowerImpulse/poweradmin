@@ -1,148 +1,87 @@
+// src/lib/usuarios/AccionesUsuario.svelte
 <script lang="ts">
-    // componente src/lib/usuarios/UsuariosGridCraft.svelte
-  import { collection, onSnapshot, doc, updateDoc, deleteDoc} from "firebase/firestore";
-  import { getAuth} from "firebase/auth";
-  import { dbUsers } from "$lib/client";
-  import { Grid, GridFooter, type PagingData, type GridColumn, type GridFilter } from '@mediakular/gridcraft'; 
-  import UsuarioEmail from "$lib/usuarios/UsuarioEmail.svelte";
-  import AccionesUsuario from "$lib/usuarios/AccionesUsuario.svelte";
-  import type { Usuario } from '$lib/types' // TIPOS TS
-  import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
+  import type { Usuario } from '$lib/types'; // Asegúrate que Usuario incluya al menos 'uid' y 'isBlocked'
+  import { CheckmarkOutline, IbmEloMethodComposer, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
 
+  // Asumimos que el tipo Usuario que llega aquí SIEMPRE tiene 'uid'
+  export let value: Usuario & { uid: string; isBlocked: boolean }; // Hacemos explícito que esperamos uid e isBlocked
 
-  const usersFirebase = collection(dbUsers, "users");
-  const auth = getAuth();
+  export let onBloquearDesbloquear: (value: Usuario) => void;
+  export let onEliminar: (uid: string) => void; // Cambiado para recibir solo uid, como en el componente padre
 
-  let usuarios: Usuario[] = [];
-  let selectedRows: Usuario[] = [];
-  let loading = true;
-  let error = "";
+  let isBlocked = value.isBlocked;
 
+  function handleBloquearDesbloquear() {
+      onBloquearDesbloquear(value);
+      isBlocked = !isBlocked; // Actualiza el estado local para reflejar el cambio visualmente
+  }
 
-onSnapshot(usersFirebase, (querySnapshot) => {
-    let listaUsuarios: Usuario[] = [];
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data && data.email && data.username && data.role !== undefined) { 
-            let usuario = { ...data, uid: doc.id } as Usuario;
-            listaUsuarios.push(usuario);
-        } else {
-            console.warn("Documento inválido:", doc.id, data); 
-        }
-    });
-    usuarios = listaUsuarios;
-    loading = false;
-});
-
-
-
-  const bloquearDesbloquearUsuario = async (usuario: Usuario) => {
-      await updateDoc(doc(dbUsers, "users", usuario.uid), {
-          isBlocked: !usuario.isBlocked,
-      });
-  };
-
-  const eliminarUsuario = async (uid: string) => {
-    try {
-        await deleteDoc(doc(dbUsers, "users", uid));
-    } catch (e: any) {
-        error = `Error al eliminar usuario: ${e.message}`;
-    }
-};
-
-
-
-  let columns: GridColumn<Usuario>[] = [
-      { 
-          key: 'infoUser', 
-          title: 'Usuario', 
-          //@ts-ignore
-          renderComponent: UsuarioEmail, 
-          accessor: (row) => ({ email: row.email, username: row.username }),
-          sortValue: (row: Usuario) => {
-            return `${row.username} ${row.email}`
-        } 
-      },
-      { key: 'role', title: 'Rol' },
-      { key: 'isBlocked', title: 'Estado', accessor: (row) => row.isBlocked ? 'Bloqueado' : 'Activo' },
-      { key: 'created_at', title: 'Creado en', accessor: (row) => row.created_at?.toDate().toLocaleString() },
-      {
-          key: 'actions',
-          title: 'Acciones',
-          sortable: false,
-          accessor: (row) => {
-         
-            return {
-                value: row,
-                onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
-                onEliminar: () => {
-              
-                    eliminarUsuario(row.uid);
-                },
-            };
-            
-          },
-          //@ts-ignore
-          renderComponent: AccionesUsuario,
-      },
-  ];
-
-  let paging = {
-      itemsPerPage: 50,
-      currentPage: 1,
-      itemsPerPageOptions: [10, 50, 100]
-  } as PagingData;
-  let showModal = false;
-
-
-  // FILTERS
-
-  let textSearch = "";
-  let filters: GridFilter[];
-
-// @ts-ignore
-$: filters = [ 
-    // busca solo en usuario
-  {
-    key: "text-search",
-    columns: ["infoUser", "role", "isBlocked"],
-    filter: (row: Usuario, colKey: string) => { 
-        // Verifica si row es undefined o null
-        if (!row) return false;
-
-        // Función para buscar en un valor específico
-        const search = (val: string | null) => val != undefined && val.toString().toLocaleLowerCase().includes(textSearch.toLocaleLowerCase());
-
-        // Buscar en las propiedades relevantes del usuario
-        return search(row.email) || search(row.username) || search(row.role) || search(row.isBlocked ? 'Bloqueado' : 'Activo');
-    }, 
-    active: (textSearch && textSearch.length > 0) ? true : false
-  },
-  
-];
-
+  function handleEliminar() {
+      // Pasamos solo el uid, como espera la función en UsuariosGridCraft.svelte
+      onEliminar(value.uid);
+  }
 </script>
 
-<div class="bar-actions pb-16 grid md:grid-cols-3 gap-6">
-    <div class="grid-col-span-2 ">
-        <input class="w-160 p-1" type="text" placeholder="Filtra por usuario o email" bind:value={textSearch} />
-    </div>  
-    
-    <div class="flex md:justify-end ">
-        <a href="/panel/usuarios/register" class=" rounded-full flex ic gap-4 "> <AddLarge />  Registrar Empleado</a>
-    </div>
-    
+<div class="flex gap-4">
+  <button class={isBlocked ? 'Desbloquear' : 'Bloquear'} on:click|preventDefault={handleBloquearDesbloquear} title={isBlocked ? 'Desbloquear Usuario' : 'Bloquear Usuario'}>
+    {#if isBlocked}
+      <NullSign class="usericon stroke-gray" />
+    {:else}
+      <CheckmarkOutline class="usericon stroke-green-5" />
+    {/if}
+    <span class="bg-gray-5">{isBlocked ? 'Desbloquear' : 'Bloquear'}</span>
+  </button>
+
+  <button on:click|preventDefault={() => {
+      if (confirm('¿Estás seguro de eliminar este usuario?')) {
+        handleEliminar();
+      }
+    }} title="Eliminar Usuario">
+    <TrashCan class="usericon stroke-red "/>
+    <span class="bg-red-6">Eliminar</span>
+  </button>
+
+  <!-- Botón Editar (funcionalidad futura) -->
+  <button title="Editar">
+    <IbmEloMethodComposer class="usericon stroke-blue" />
+    <span class="bg-blue-8">Editar</span>
+  </button>
+
+  <!-- ***** CAMBIO AQUÍ: Convertir el botón "Ver Perfil" en un enlace ***** -->
+  <a href={`/panel/usuarios/usuario/${value.uid}`} title="Ver perfil" class="button-like">
+    <Identification class="usericon stroke-zinc-8 stroke-1" />
+    <span class="bg-blue">Ver Perfil</span>
+  </a>
+  <!-- ******************************************************************** -->
+
 </div>
 
-
-{#if loading}
-  <p>Cargando...</p>
-{:else}
-<p class="error">{error}</p>
-  <Grid data={usuarios} bind:paging={paging} bind:columns bind:selectedRows  bind:filters />
-  <GridFooter bind:paging />
-{/if}
-
 <style>
-  .error { color: red;}
+  /* Estilos generales para botones y el enlace que parece botón */
+  button, a.button-like {
+    --at-apply: relative inline-flex items-center justify-center p-1 border border-transparent rounded-md cursor-pointer; /* Añade estilos base si es necesario */
+    /* Asegúrate de que los iconos tengan un tamaño consistente */
+    & .usericon {
+       width: 1.5em; /* Ajusta según necesites */
+       height: 1.5em; /* Ajusta según necesites */
+    }
+  }
+
+  button span, a.button-like span {
+    --at-apply: hidden min-w-16 absolute text-12px text-white rounded-4 p-1 -left-2 bottom-110% z-10; /* Añade z-index por si acaso */
+  }
+
+  button:hover span, a.button-like:hover span {
+    --at-apply: block;
+  }
+
+  /* Puedes añadir estilos específicos para el enlace si quieres diferenciarlo un poco */
+  a.button-like {
+     /* Estilos adicionales si son necesarios */
+  }
+
+  /* Estilos específicos para los botones originales si se necesitan */
+  .Bloquear { /* ... tus estilos ... */ }
+  .Desbloquear { /* ... tus estilos ... */ }
+
 </style>
