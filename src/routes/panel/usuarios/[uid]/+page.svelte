@@ -9,6 +9,7 @@
   import SectionName from '$lib/components/ui/SectionName.svelte';
 
   export let data: PageData;
+  let editableDiasLaborables: string[] = [];
 
   // Copia profunda inicial para poder cancelar/editar
   // Asegurarse de que domicilio exista si no viene del fetch inicial
@@ -16,7 +17,13 @@
   if (!usuario.domicilio) {
       usuario.domicilio = { calle: '', colonia: '', cp: '', estado: '', numero_ext: '', numero_int: '' };
   }
-  let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario)); // Copia de la versión inicial (con domicilio asegurado)
+  let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario)); // Copia de la versión inicial 
+  // Inicializar editableDiasLaborables con los datos existentes o con un campo vacío
+    editableDiasLaborables = [...(usuario.dias_laborables || [])];
+    // Asegurarse de que siempre haya al menos un campo vacío si la lista está vacía al inicio
+    if (editableDiasLaborables.length === 0) {
+        editableDiasLaborables = [''];   
+    }
 
   let editMode = false;
   let isSaving = false;
@@ -25,6 +32,7 @@
 
   // Variable string para manejar 'dias_laborables' en el input
   let diasLaborablesString = '';
+
 
   // --- Lógica para Editar y Guardar ---
 
@@ -56,6 +64,22 @@
       saveMessage = '';
       saveMessageType = '';
   }
+
+  // Funciones para agregar/quitar días laborables en modo edición
+const agregarDiaLaborable = () => {
+    editableDiasLaborables = [...editableDiasLaborables, ''];
+};
+
+const quitarDiaLaborable = (index: number) => {
+    // Permitir eliminar solo si hay más de un campo
+    if (editableDiasLaborables.length > 1) {
+        editableDiasLaborables = editableDiasLaborables.filter((_, i) => i !== index);
+    } else {
+         // Si solo queda uno, simplemente vaciarlo en lugar de quitarlo
+         editableDiasLaborables = [''];
+    }
+};
+
 
   async function guardarCambiosUsuario() {
       if (!usuario || !usuario.uid || isSaving) {
@@ -286,9 +310,43 @@
                              {#if editMode} <input class="input-field" id="edad" type="number" bind:value={usuario.edad} disabled={isSaving}>{:else}<p class="data-field">{usuario.edad || 'N/A'}</p>{/if}
                          </div>
                         <div class="field-group">
-                             <label class="label-field" for="genero">Género:</label>
+                            <label class="label-field" for="genero">Género:</label>
                              {#if editMode}
-                                 <input class="input-field" id="genero" type="text" bind:value={usuario.genero} disabled={isSaving}>
+                                 
+                             <div class="field-group">
+                              
+                                {#if editMode}
+                                    <div class="flex items-center gap-4">
+                                        <label class="inline-flex items-center">
+                                            <input
+                                                type="radio"
+                                                class="form-radio"
+                                                name="genero" 
+                                                value="masculino"
+                                                bind:group={usuario.genero}
+                                                disabled={isSaving}
+                                            />
+                                            <span class="ml-2 text-gray-700">Masculino</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input
+                                                type="radio"
+                                                class="form-radio"
+                                                name="genero"
+                                                value="femenino"
+                                                bind:group={usuario.genero}
+                                                disabled={isSaving}
+                                            />
+                                            <span class="ml-2 text-gray-700">Femenino</span>
+                                        </label>
+                                        {#if usuario.genero && usuario.genero !== 'masculino' && usuario.genero !== 'femenino'}
+                                            <span class="ml-2 text-gray-500 text-sm">Valor actual: {usuario.genero}</span>
+                                        {/if}
+                                    </div>
+                                    {:else}
+                                     <p class="data-field">{usuario.genero || 'N/A'}</p>
+                                 {/if}
+                             </div>
                                  {:else}
                                  <p class="data-field">{usuario.genero || 'N/A'}</p>
                              {/if}
@@ -296,7 +354,26 @@
                         <div class="field-group">
                              <label class="label-field" for="estado_civil">Estado Civil:</label>
                              {#if editMode}
-                                 <input class="input-field" id="estado_civil" type="text" bind:value={usuario.estado_civil} disabled={isSaving}>
+                             <div class="field-group">
+                               
+                                {#if editMode}
+                                    <select
+                                        class="input-field"
+                                        id="estado_civil"
+                                        bind:value={usuario.estado_civil}
+                                        disabled={isSaving}
+                                    >
+                                        <option value="">Selecciona</option> 
+                                        <option value="soltero">Soltero</option>
+                                        <option value="casado">Casado</option>
+                                        <option value="divorciado">Divorciado</option>
+                                        <option value="viudo">Viudo</option>
+                                        <option value="union_libre">Unión Libre</option>
+                                        </select>
+                                    {:else}
+                                     <p class="data-field">{usuario.estado_civil || 'N/A'}</p>
+                                 {/if}
+                             </div>
                                   {:else}
                                  <p class="data-field">{usuario.estado_civil || 'N/A'}</p>
                              {/if}
