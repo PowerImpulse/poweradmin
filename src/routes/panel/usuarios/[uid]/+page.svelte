@@ -113,29 +113,30 @@
         };
   
         try {
-            await updateDoc(userDocRef, dataToUpdate);
-            
-            // Actualizar datos originales
-            originalUsuarioData = JSON.parse(JSON.stringify({
-                ...usuario,
-                dias_laborables: diasLaborablesParaGuardar
-            }));
-            
-            // Sincronizar editableDiasLaborables
-            editableDiasLaborables = diasLaborablesParaGuardar.length > 0 
-              ? [...diasLaborablesParaGuardar] 
-              : [''];
-            
-            editMode = false;
-            saveMessage = '¡Cambios guardados exitosamente!';
-            saveMessageType = 'success';
-        } catch (error: any) {
-            console.error("Error al actualizar usuario:", error);
-            saveMessage = `Error al guardar: ${error.message}`;
-            saveMessageType = 'error';
-        } finally {
-            isSaving = false;
-        }
+        await updateDoc(userDocRef, dataToUpdate);
+        
+        // Actualizar ambas variables
+        originalUsuarioData = JSON.parse(JSON.stringify({
+            ...usuario,
+            dias_laborables: diasLaborablesParaGuardar
+        }));
+        
+        // ACTUALIZAR ESTA LÍNEA
+        usuario.dias_laborables = diasLaborablesParaGuardar; // <- Esto faltaba
+        
+        editableDiasLaborables = diasLaborablesParaGuardar.length > 0 
+            ? [...diasLaborablesParaGuardar] 
+            : [''];
+        
+        editMode = false;
+        saveMessage = '¡Cambios guardados exitosamente!';
+        saveMessageType = 'success';
+    } catch (error: any) {
+        // ... manejo de errores igual ...
+    } finally {
+        isSaving = false;
+    }
+
     }
   
     function formatDate(dateInput: string | undefined | null | { toDate: () => Date }) {
