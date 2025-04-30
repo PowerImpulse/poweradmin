@@ -11,13 +11,13 @@
   export let data: PageData;
   let editableDiasLaborables: string[] = [];
 
-  // Copia profunda inicial para poder cancelar/editar
   // Asegurarse de que domicilio exista si no viene del fetch inicial
   let usuario: DatosUsuario = JSON.parse(JSON.stringify(data.usuario || {}));
   if (!usuario.domicilio) {
       usuario.domicilio = { calle: '', colonia: '', cp: '', estado: '', numero_ext: '', numero_int: '' };
   }
-  let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario)); // Copia de la versión inicial 
+  // Copia de la versión inicial 
+  let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario)); 
   // Inicializar editableDiasLaborables con los datos existentes o con un campo vacío
     editableDiasLaborables = [...(usuario.dias_laborables || [])];
     // Asegurarse de que siempre haya al menos un campo vacío si la lista está vacía al inicio
@@ -47,8 +47,11 @@
           // Restaurar con los datos originales guardados (que ya tienen domicilio asegurado)
           usuario = JSON.parse(JSON.stringify(originalUsuarioData));
 
-          // Inicializar diasLaborablesString desde el array actual
-          diasLaborablesString = usuario.dias_laborables?.join(', ') || '';
+          // REINICIALIZAR editableDiasLaborables 
+          editableDiasLaborables = [...(usuario.dias_laborables || [])];
+        if (editableDiasLaborables.length === 0) { // Asegurarse de que haya al menos un campo
+            editableDiasLaborables = [''];
+        }diasLaborablesString = usuario.dias_laborables?.join(', ') || '';
 
           editMode = true;
           // No es estrictamente necesario await tick() aquí, Svelte maneja la reactividad.
@@ -59,6 +62,10 @@
   function cancelEdit() {
       // Restaurar datos originales y salir del modo edición
       usuario = JSON.parse(JSON.stringify(originalUsuarioData));
+        editableDiasLaborables = [...(originalUsuarioData.dias_laborables || [])];
+     if (editableDiasLaborables.length === 0) { // Asegurar al menos un campo
+        editableDiasLaborables = [''];
+     }
       editMode = false;
       isSaving = false;
       saveMessage = '';
@@ -96,11 +103,10 @@ const quitarDiaLaborable = (index: number) => {
 
       const userDocRef = doc(dbUsers, 'users', usuario.uid);
 
-      // Convertir el string 'diasLaborablesString' de nuevo a array
-      const diasLaborablesArray = diasLaborablesString
-          .split(',')
-          .map(d => d.trim()) // Quitar espacios extra
-          .filter(d => d !== ''); // Quitar elementos vacíos (por comas seguidas o al final)
+     // PROCESAR editableDiasLaborables para guardar
+        const diasLaboralesParaGuardar = editableDiasLaborables
+        .map(d => d.trim())
+        .filter(d => d !== '');
 
       // Objeto con los datos a actualizar
       const dataToUpdate = {
@@ -117,8 +123,7 @@ const quitarDiaLaborable = (index: number) => {
           fecha_ingreso: usuario.fecha_ingreso || '',
           lugar_ciudad: usuario.lugar_ciudad || '',
           lugar_fecha: usuario.lugar_fecha || '',
-          dias_laborables: diasLaborablesArray, // <-- Usar el array procesado
-          // Asegurarse de que domicilio sea un objeto si tiene campos
+          dias_laborales: diasLaboralesParaGuardar,  
           domicilio: (usuario.domicilio && (usuario.domicilio.calle || usuario.domicilio.colonia || usuario.domicilio.cp || usuario.domicilio.estado || usuario.domicilio.numero_ext || usuario.domicilio.numero_int)) ? {
               calle: usuario.domicilio.calle || '',
               colonia: usuario.domicilio.colonia || '',
@@ -134,7 +139,12 @@ const quitarDiaLaborable = (index: number) => {
           await updateDoc(userDocRef, dataToUpdate);
           // Éxito
           // Actualizar la 'copia original' con los datos guardados, incluyendo el array procesado
-          originalUsuarioData = JSON.parse(JSON.stringify({...usuario, dias_laborables: diasLaborablesArray}));
+          originalUsuarioData = JSON.parse(JSON.stringify({...usuario, dias_laborables: diasLaboralesParaGuardar}));
+         // Y actualizar editableDiasLaborables para reflejar el estado guardado
+         editableDiasLaborables = [...(originalUsuarioData.dias_laborables || [])];
+          if (editableDiasLaborables.length === 0) { // Asegurar al menos un campo
+             editableDiasLaborables = [''];
+          }
           editMode = false;
           saveMessage = '¡Perfil actualizado correctamente!';
           saveMessageType = 'success';
@@ -378,15 +388,52 @@ const quitarDiaLaborable = (index: number) => {
                                  <p class="data-field">{usuario.estado_civil || 'N/A'}</p>
                              {/if}
                          </div>
-                        <div class="field-group">
-                             <label class="label-field" for="dias_laborables">Días Laborables:</label>
-                             {#if editMode}
-                               <input class="input-field" id="dias_laborables" type="text" bind:value={diasLaborablesString} placeholder="Lunes, Martes, Miércoles..." disabled={isSaving}>
-                               <span class="text-xs text-gray-500 block mt-1">Separar por comas.</span>
-                             {:else}
-                               <p class="data-field">{usuario.dias_laborables?.join(', ') || 'N/A'}</p>
-                             {/if}
-                         </div>
+                         <div class="field-group">
+                            <label class="label-field" for="dias_laborables">Días Laborales:</label>
+                            {#if editMode}
+                                <div class="space-y-2"> 
+                                    {#each editableDiasLaborables as dia, index (index)}
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                class="input-field flex-grow"
+                                                type="text"
+                                                placeholder="Día Laborable (ej. Lunes a Viernes de 09:00 a 18:00)"
+                                                bind:value={editableDiasLaborables[index]}
+                                                disabled={isSaving}
+                                            />
+                                            {#if editableDiasLaborables.length > 1}
+                                                <button
+                                                    type="button"
+                                                    on:click={() => quitarDiaLaborable(index)}
+                                                    disabled={isSaving}
+                                                    class="bg-red-500 text-white p-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                                    title="Eliminar horario"
+                                                > - </button>
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                    <button
+                                        type="button"
+                                        on:click={agregarDiaLaborable}
+                                        disabled={isSaving}
+                                        class="bg-green-500 text-white p-2 rounded w-max hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="Agregar otro horario"
+                                    > Agregar otro horario </button>
+                                </div>
+                            {:else}
+                                {#if usuario.dias_laborables && usuario.dias_laborables.length > 0}
+                                    <ul class="data-field-list mt-1 text-gray-900 px-1 space-y-0.5"> 
+                                        {#each usuario.dias_laborables as dia}
+                                            {#if dia.trim() !== ''} 
+                                                <li>{dia.trim()}</li> 
+                                            {/if}
+                                        {/each}
+                                    </ul>
+                                {:else}
+                                    <p class="data-field text-gray-500">No hay días laborales registrados.</p>
+                                {/if}
+                                {/if}
+                        </div>
                         <div class="field-group">
                              <label class="label-field" for="lugar_ciudad">Lugar Ciudad (Contrato?):</label>
                              {#if editMode} <input class="input-field" id="lugar_ciudad" type="text" bind:value={usuario.lugar_ciudad} disabled={isSaving}>{:else}<p class="data-field">{usuario.lugar_ciudad || 'N/A'}</p>{/if}
