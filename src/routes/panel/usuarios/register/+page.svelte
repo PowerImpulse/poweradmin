@@ -37,7 +37,7 @@
 	let domicilio_estado = 'Jalisco';
     let fecha_ingreso: string = '';
     let puesto = '1';
-    let dias_laborables: string[] = [''];
+    let dias_laborables: string[]= [''];
 
 
 	// --- Functions ---
