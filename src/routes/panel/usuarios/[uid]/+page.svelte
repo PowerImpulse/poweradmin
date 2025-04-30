@@ -277,7 +277,10 @@
              <!-- Género -->
                <div class="field-group">
                   <label class="label-field" for="genero">Género:</label>
-                  {#if editMode} <input class="input-field" id="genero" type="text" bind:value={usuario.genero} disabled={isSaving}>{:else}<p class="data-field">{usuario.genero || 'N/A'}</p>{/if}
+                  {#if editMode} 
+                  
+        
+                  <input class="input-field" id="genero" type="text" bind:value={usuario.genero} disabled={isSaving}>{:else}<p class="data-field">{usuario.genero || 'N/A'}</p>{/if}
               </div>
              <!-- Estado Civil -->
                <div class="field-group">

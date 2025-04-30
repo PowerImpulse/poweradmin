@@ -1,6 +1,5 @@
 <script lang="ts">
-
-export const ssr = false;
+  
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { isLoggedIn, loadingUser, user } from '$lib/stores';
