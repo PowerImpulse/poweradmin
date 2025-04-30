@@ -1,196 +1,170 @@
+
 <script lang="ts">
-  import type { PageData } from './$types';
-  import type { DatosUsuario } from '$lib/types';
-  import { Edit, DocumentPdf, Image, Save, Close } from 'carbon-icons-svelte';
-  import { doc, updateDoc } from 'firebase/firestore';
-  import { dbUsers } from '$lib/client';
-  import { tick } from 'svelte';
-  import { BarLoader } from "svelte-loading-spinners";
-  import SectionName from '$lib/components/ui/SectionName.svelte';
-
-  export let data: PageData;
-  let editableDiasLaborables: string[] = [];
-
-  // Asegurarse de que domicilio exista si no viene del fetch inicial
-  let usuario: DatosUsuario = JSON.parse(JSON.stringify(data.usuario || {}));
-  if (!usuario.domicilio) {
-      usuario.domicilio = { calle: '', colonia: '', cp: '', estado: '', numero_ext: '', numero_int: '' };
-  }
-  // Copia de la versión inicial 
-  let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario)); 
-  // Inicializar editableDiasLaborables con los datos existentes o con un campo vacío
-    editableDiasLaborables = [...(usuario.dias_laborables || [])];
-    // Asegurarse de que siempre haya al menos un campo vacío si la lista está vacía al inicio
-    if (editableDiasLaborables.length === 0) {
-        editableDiasLaborables = [''];   
+    import type { PageData } from './$types';
+    import type { DatosUsuario } from '$lib/types';
+    import { Edit, DocumentPdf, Image, Save, Close } from 'carbon-icons-svelte';
+    import { doc, updateDoc } from 'firebase/firestore';
+    import { dbUsers } from '$lib/client';
+    import { BarLoader } from "svelte-loading-spinners";
+    import SectionName from '$lib/components/ui/SectionName.svelte';
+  
+    export let data: PageData;
+    let editableDiasLaborables: string[] = [];
+  
+    // Inicialización de usuario
+    let usuario: DatosUsuario = JSON.parse(JSON.stringify(data.usuario || {}));
+    if (!usuario.domicilio) {
+        usuario.domicilio = { calle: '', colonia: '', cp: '', estado: '', numero_ext: '', numero_int: '' };
     }
-
-  let editMode = false;
-  let isSaving = false;
-  let saveMessage = '';
-  let saveMessageType: 'success' | 'error' | '' = '';
-
-  // Variable string para manejar 'dias_laborables' en el input
-  let diasLaborablesString = '';
-
-
-  // --- Lógica para Editar y Guardar ---
-
-  async function toggleEditMode() {
-      if (editMode) {
-          // Guardar cambios si estábamos en modo edición
-          await guardarCambiosUsuario();
-      } else {
-          // Entrar en modo edición
-          saveMessage = ''; // Limpiar mensajes
-          saveMessageType = '';
-          // Restaurar con los datos originales guardados (que ya tienen domicilio asegurado)
-          usuario = JSON.parse(JSON.stringify(originalUsuarioData));
-
-          // REINICIALIZAR editableDiasLaborables 
-          editableDiasLaborables = [...(usuario.dias_laborables || [])];
-        if (editableDiasLaborables.length === 0) { // Asegurarse de que haya al menos un campo
+  
+    // Copia original de los datos
+    let originalUsuarioData: DatosUsuario = JSON.parse(JSON.stringify(usuario));
+    
+    // Inicializar días laborables
+    editableDiasLaborables = usuario.dias_laborables?.length > 0 
+      ? [...usuario.dias_laborables] 
+      : [''];
+  
+    let editMode = false;
+    let isSaving = false;
+    let saveMessage = '';
+    let saveMessageType: 'success' | 'error' | '' = '';
+  
+    async function toggleEditMode() {
+        if (editMode) {
+            await guardarCambiosUsuario();
+        } else {
+            usuario = JSON.parse(JSON.stringify(originalUsuarioData));
+            editableDiasLaborables = usuario.dias_laborables?.length > 0 
+              ? [...usuario.dias_laborables] 
+              : [''];
+            editMode = true;
+            saveMessage = '';
+            saveMessageType = '';
+        }
+    }
+  
+    function cancelEdit() {
+        usuario = JSON.parse(JSON.stringify(originalUsuarioData));
+        editableDiasLaborables = originalUsuarioData.dias_laborables?.length > 0 
+          ? [...originalUsuarioData.dias_laborables] 
+          : [''];
+        editMode = false;
+        isSaving = false;
+        saveMessage = '';
+        saveMessageType = '';
+    }
+  
+    const agregarDiaLaborable = () => {
+        editableDiasLaborables = [...editableDiasLaborables, ''];
+    };
+  
+    const quitarDiaLaborable = (index: number) => {
+        if (editableDiasLaborables.length > 1) {
+            editableDiasLaborables = editableDiasLaborables.filter((_, i) => i !== index);
+        } else {
             editableDiasLaborables = [''];
-        }diasLaborablesString = usuario.dias_laborables?.join(', ') || '';
-
-          editMode = true;
-          // No es estrictamente necesario await tick() aquí, Svelte maneja la reactividad.
-          // await tick();
-      }
-  }
-
-  function cancelEdit() {
-      // Restaurar datos originales y salir del modo edición
-      usuario = JSON.parse(JSON.stringify(originalUsuarioData));
-        editableDiasLaborables = [...(originalUsuarioData.dias_laborables || [])];
-     if (editableDiasLaborables.length === 0) { // Asegurar al menos un campo
-        editableDiasLaborables = [''];
-     }
-      editMode = false;
-      isSaving = false;
-      saveMessage = '';
-      saveMessageType = '';
-  }
-
-  // Funciones para agregar/quitar días laborables en modo edición
-const agregarDiaLaborable = () => {
-    editableDiasLaborables = [...editableDiasLaborables, ''];
-};
-
-const quitarDiaLaborable = (index: number) => {
-    // Permitir eliminar solo si hay más de un campo
-    if (editableDiasLaborables.length > 1) {
-        editableDiasLaborables = editableDiasLaborables.filter((_, i) => i !== index);
-    } else {
-         // Si solo queda uno, simplemente vaciarlo en lugar de quitarlo
-         editableDiasLaborables = [''];
+        }
+    };
+  
+    async function guardarCambiosUsuario() {
+        if (!usuario?.uid || isSaving) return;
+  
+        isSaving = true;
+        saveMessage = '';
+        saveMessageType = '';
+  
+        const userDocRef = doc(dbUsers, 'users', usuario.uid);
+  
+        const diasLaborablesParaGuardar = editableDiasLaborables
+            .map(d => d.trim())
+            .filter(d => d !== '');
+  
+        const dataToUpdate = {
+            nombre_completo: usuario.nombre_completo || '',
+            username: usuario.username || '',
+            email: usuario.email || '',
+            puesto: usuario.puesto || '',
+            role: usuario.role || '',
+            curp: usuario.curp || '',
+            rfc: usuario.rfc || '',
+            edad: usuario.edad || null,
+            genero: usuario.genero || '',
+            estado_civil: usuario.estado_civil || '',
+            fecha_ingreso: usuario.fecha_ingreso || '',
+            lugar_ciudad: usuario.lugar_ciudad || '',
+            lugar_fecha: usuario.lugar_fecha || '',
+            dias_laborables: diasLaborablesParaGuardar,
+            domicilio: (usuario.domicilio && (
+                usuario.domicilio.calle ||
+                usuario.domicilio.colonia ||
+                usuario.domicilio.cp ||
+                usuario.domicilio.estado ||
+                usuario.domicilio.numero_ext ||
+                usuario.domicilio.numero_int
+            )) ? {
+                calle: usuario.domicilio.calle || '',
+                colonia: usuario.domicilio.colonia || '',
+                cp: usuario.domicilio.cp || '',
+                estado: usuario.domicilio.estado || '',
+                numero_ext: usuario.domicilio.numero_ext || '',
+                numero_int: usuario.domicilio.numero_int || '',
+            } : null
+        };
+  
+        try {
+            await updateDoc(userDocRef, dataToUpdate);
+            
+            // Actualizar datos originales
+            originalUsuarioData = JSON.parse(JSON.stringify({
+                ...usuario,
+                dias_laborables: diasLaborablesParaGuardar
+            }));
+            
+            // Sincronizar editableDiasLaborables
+            editableDiasLaborables = diasLaborablesParaGuardar.length > 0 
+              ? [...diasLaborablesParaGuardar] 
+              : [''];
+            
+            editMode = false;
+            saveMessage = '¡Cambios guardados exitosamente!';
+            saveMessageType = 'success';
+        } catch (error: any) {
+            console.error("Error al actualizar usuario:", error);
+            saveMessage = `Error al guardar: ${error.message}`;
+            saveMessageType = 'error';
+        } finally {
+            isSaving = false;
+        }
     }
-};
-
-
-  async function guardarCambiosUsuario() {
-      if (!usuario || !usuario.uid || isSaving) {
-          if (!usuario || !usuario.uid) {
-              saveMessage = "Error: No se puede guardar sin UID de usuario.";
-               saveMessageType = 'error';
-          }
-        return; // Prevenir guardado sin UID o doble click
-      }
-
-      isSaving = true;
-      saveMessage = ''; // Limpiar mensaje anterior, el loader indicará progreso
-      saveMessageType = '';
-
-      const userDocRef = doc(dbUsers, 'users', usuario.uid);
-
-     // PROCESAR editableDiasLaborables para guardar
-        const diasLaboralesParaGuardar = editableDiasLaborables
-        .map(d => d.trim())
-        .filter(d => d !== '');
-
-      // Objeto con los datos a actualizar
-      const dataToUpdate = {
-          nombre_completo: usuario.nombre_completo || '',
-          username: usuario.username || '',
-          email: usuario.email || '',
-          puesto: usuario.puesto || '',
-          role: usuario.role || '',
-          curp: usuario.curp || '',
-          rfc: usuario.rfc || '',
-          edad: usuario.edad || null, // Mantener null si no hay valor
-          genero: usuario.genero || '',
-          estado_civil: usuario.estado_civil || '',
-          fecha_ingreso: usuario.fecha_ingreso || '',
-          lugar_ciudad: usuario.lugar_ciudad || '',
-          lugar_fecha: usuario.lugar_fecha || '',
-          dias_laborales: diasLaboralesParaGuardar,  
-          domicilio: (usuario.domicilio && (usuario.domicilio.calle || usuario.domicilio.colonia || usuario.domicilio.cp || usuario.domicilio.estado || usuario.domicilio.numero_ext || usuario.domicilio.numero_int)) ? {
-              calle: usuario.domicilio.calle || '',
-              colonia: usuario.domicilio.colonia || '',
-              cp: usuario.domicilio.cp || '',
-              estado: usuario.domicilio.estado || '',
-              // Usamos los nombres de campo de Firestore: numero_ext, numero_int
-              numero_ext: usuario.domicilio.numero_ext || '',
-              numero_int: usuario.domicilio.numero_int || '',
-          } : null, // Guardar null si todos los campos de domicilio están vacíos
-      };
-
-      try {
-          await updateDoc(userDocRef, dataToUpdate);
-          // Éxito
-          // Actualizar la 'copia original' con los datos guardados, incluyendo el array procesado
-          originalUsuarioData = JSON.parse(JSON.stringify({...usuario, dias_laborables: diasLaboralesParaGuardar}));
-         // Y actualizar editableDiasLaborables para reflejar el estado guardado
-         editableDiasLaborables = [...(originalUsuarioData.dias_laborables || [])];
-          if (editableDiasLaborables.length === 0) { // Asegurar al menos un campo
-             editableDiasLaborables = [''];
-          }
-          editMode = false;
-          saveMessage = '¡Perfil actualizado correctamente!';
-          saveMessageType = 'success';
-      } catch (error: any) {
-          console.error("Error al actualizar usuario:", error);
-          saveMessage = `Error al guardar: ${error.message}`;
-          saveMessageType = 'error';
-          // Mantenemos editMode = true para corregir
-      } finally {
-          isSaving = false; // Termina el estado de guardado
-      }
-  }
-
-  // Helper para formatear fechas
-  function formatDate(dateInput: string | undefined | null | { toDate: () => Date }) {
-     if (!dateInput) return 'N/A';
-     try {
-         let date: Date;
-         if (typeof dateInput === 'string') {
-             // Intentar parsear como YYYY-MM-DD o ISO string
-             if (!dateInput.includes('T') && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-                // Añadir tiempo para evitar problemas de zona horaria al parsear solo fecha
-                date = new Date(`${dateInput}T00:00:00`);
-             } else {
-                date = new Date(dateInput);
-             }
-         } else if (dateInput && typeof dateInput === 'object' && 'toDate' in dateInput && typeof dateInput.toDate === 'function') {
-             // Firebase Timestamp object
-             date = dateInput.toDate();
-         } else {
-             return 'Fecha inválida (tipo)';
-         }
-
-         if (isNaN(date.getTime())) {
-            return 'Fecha inválida (valor)';
-         }
-         return date.toLocaleDateString('es-ES', {
-           year: 'numeric', month: 'long', day: 'numeric'
-         });
-     } catch(e) {
-         console.error("Error formateando fecha:", dateInput, e);
-         return String(dateInput); // Mostrar el valor original si hay un error
-     }
-  }
-
-</script>
+  
+    function formatDate(dateInput: string | undefined | null | { toDate: () => Date }) {
+        if (!dateInput) return 'N/A';
+        try {
+            let date: Date;
+            if (typeof dateInput === 'string') {
+                date = dateInput.includes('T') 
+                    ? new Date(dateInput) 
+                    : new Date(`${dateInput}T00:00:00`);
+            } else if (dateInput?.toDate) {
+                date = dateInput.toDate();
+            } else {
+                return 'Fecha inválida';
+            }
+  
+            return isNaN(date.getTime()) 
+                ? 'Fecha inválida' 
+                : date.toLocaleDateString('es-ES', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  });
+        } catch(e) {
+            console.error("Error formateando fecha:", e);
+            return 'Fecha inválida';
+        }
+    }
+  </script>
 
 <SectionName Title={usuario.username || 'Cargando Usuario...'}>
   <div class="perfil-usuario p-6 bg-white ">
