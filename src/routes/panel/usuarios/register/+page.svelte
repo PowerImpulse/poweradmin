@@ -23,16 +23,16 @@
 	// ... (resto de variables de estado: lugar_ciudad, nombre_completo, etc. sin cambios)
     let lugar_ciudad = 'Guadalajara';
     let lugar_fecha = '5 de Mayo de 2025';
-    let nombre_completo = 'Jean Reynoso ';
-    let estado_civil = 'soltero';
+    let nombre_completo = ' ';
+    let estado_civil = '';
     let edad: number | null = 30;
     let genero = 'masculino';
-    let rfc = 'REVJ750603JX3';
-    let curp = 'REVJ750603HDFYGN00';
-    let domicilio_calle = 'Acolman 100';
-    let domicilio_referencia = 'Casa blanca';
-	let domicilio_colonia = 'Ahuehuetes';
-	let domicilio_cp = '52943';
+    let rfc = '';
+    let curp = '';
+    let domicilio_calle = '';
+    let domicilio_referencia = '';
+	let domicilio_colonia = '';
+	let domicilio_cp = '';
     let domicilio_municipio = 'Guadalajara';
 	let domicilio_estado = 'Jalisco';
     let fecha_ingreso: string = '';
