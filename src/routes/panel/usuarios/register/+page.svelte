@@ -11,10 +11,10 @@
 	const auth = getAuth();
 
 	// --- State Variables ---
-	let email = 'jean@uno.com';
+	let email = '';
 	let username = '';
-	let role = 'Técnico';
-	let password = 'Jedax25+';
+	let role = '';
+	let password = '';
 	let error = '';
 	let successMessage = '';
 	let isLoading = false; // Para controlar el BarLoader
