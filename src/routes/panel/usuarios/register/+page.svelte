@@ -23,9 +23,9 @@
 	// ... (resto de variables de estado: lugar_ciudad, nombre_completo, etc. sin cambios)
     let lugar_ciudad = 'Guadalajara';
     let lugar_fecha = '5 de Mayo de 2025';
-    let nombre_completo = ' ';
-    let estado_civil = '';
-    let edad: number | null = 30;
+    let nombre_completo = '';
+    let estado_civil: string | null;
+    let edad: number | null;
     let genero = 'masculino';
     let rfc = '';
     let curp = '';
@@ -217,7 +217,8 @@
 				<TitleArea title="Datos del Trabajador" />
 				<div class="grid lg:grid-cols-2 gap-6">
 					<input type="text" placeholder="Nombre Completo" bind:value={nombre_completo} />
-					<select bind:value={estado_civil}>
+					<select bind:value={estado_civil} >
+						<option value="" disabled selected>Estado Civil</option>
 						<option value="soltero">Soltero</option>
 						<option value="casado">Casado</option>
 						<option value="divorciado">Divorciado</option>
