@@ -3,7 +3,7 @@
     import type { PageData } from './$types';
     import type { DatosUsuario } from '$lib/types';
     import { Edit, DocumentPdf, Image, Save, Close } from 'carbon-icons-svelte';
-    import { doc, updateDoc } from 'firebase/firestore';
+    import { doc, updateDoc, deleteField } from 'firebase/firestore';
     import { dbUsers } from '$lib/client';
     import { BarLoader } from "svelte-loading-spinners";
     import SectionName from '$lib/components/ui/SectionName.svelte';
@@ -165,7 +165,42 @@
             return 'Fecha inválida';
         }
     }
-  </script>
+  
+
+  function eliminarDocumento(fileKey: string): Promise<void> {
+
+    const userDocRef = doc(dbUsers, 'users', usuario.uid);
+
+    const dataToUpdate = {
+        [`documents.${fileKey}`]: deleteField()
+    };
+    return updateDoc(userDocRef, dataToUpdate)
+        .then(() => {
+            if (!usuario.documents) {
+        usuario.documents = {}; // Initialize it if undefined
+      } else{
+        if (fileKey == 'workerPhoto') {
+            usuario.documents.workerPhoto = '';
+        } else if (fileKey == 'ineFront') {
+            usuario.documents.ineFront = '';
+        } else if (fileKey == 'ineBack') {
+            usuario.documents.ineBack = '';
+        } else if (fileKey == 'waiver') {
+            usuario.documents.waiver = '';
+        }
+      }
+            
+            saveMessage = '¡Documento eliminado exitosamente!';
+            saveMessageType = 'success';
+        })
+        .catch((error) => {
+            console.error("Error eliminando documento:", error);
+            saveMessage = 'Error al eliminar el documento.';
+            saveMessageType = 'error';
+        });
+    
+  }
+</script>
 
 <SectionName Title={usuario.username || 'Cargando Usuario...'}>
   <div class="perfil-usuario p-6 bg-white ">
@@ -448,16 +483,20 @@
                            {#if usuario.documents.workerPhoto}<li>
                              <a href={usuario.documents.workerPhoto} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc w-4 h-4"/> Foto Trabajador</a>
                              <img class="object-cover w-24 mt-2 border rounded" src={usuario.documents.workerPhoto} alt="Foto Trabajador" >
+                             <button type="button" on:click={() => eliminarDocumento('workerPhoto')} class="text-red-500 hover:text-red-700">Eliminar foto</button>
                            </li>{/if}
                              {#if usuario.documents.ineFront}<li>
                                <a href={usuario.documents.ineFront} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc w-4 h-4"/> INE (Frente)</a>
                                <img class="object-cover w-32 mt-2 border rounded" src={usuario.documents.ineFront} alt="INE Frente" >
+                               <button type="button" on:click={() => eliminarDocumento('ineFront')} class="text-red-500 hover:text-red-700">Eliminar frente</button>
                              </li>{/if}
                              {#if usuario.documents.ineBack}<li>
                                <a href={usuario.documents.ineBack} target="_blank" rel="noopener noreferrer" class="link-documento"><Image class="icon-doc w-4 h-4"/> INE (Reverso)</a>
                                <img class="object-cover w-32 mt-2 border rounded" src={usuario.documents.ineBack} alt="INE Reverso" >
+                               <button type="button" on:click={() => eliminarDocumento('ineBack')} class="text-red-500 hover:text-red-700">Eliminar reverso</button>
                              </li>{/if}
                              {#if usuario.documents.waiver}<li><a href={usuario.documents.waiver} target="_blank" rel="noopener noreferrer" class="link-documento"><DocumentPdf class="icon-doc w-4 h-4"/>Descargar Carta</a>
+                                 <button type="button" on:click={() => eliminarDocumento('waiver')} class="text-red-500 hover:text-red-700">Eliminar carta</button>
                              </li>{/if}
                            </ul>
                        {:else}
