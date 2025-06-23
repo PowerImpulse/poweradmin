@@ -1,13 +1,13 @@
 // functions/src/enviarAsistencias.js
 
-
-async function procesarYEnviarResumenes(startDate, endDate, deps) {
+async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
   const { db, Timestamp, logger, generarPdfConPdfKit, TIME_ZONE } = deps;
 
   const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const mesDelReporte = `${meses[startDate.getUTCMonth()]} de ${startDate.getUTCFullYear()}`;
 
-  logger.info(`PROCESAR_RESUMENES: Iniciando para periodo ${startDate.toISOString()} a ${endDate.toISOString()}. Reporte para: ${mesDelReporte}`);
+  // --- MODIFICACIÓN 1 --- : Se añade periodoTipo al log
+  logger.info(`PROCESAR_RESUMENES: Iniciando para periodo ${periodoTipo} (${startDate.toISOString()} a ${endDate.toISOString()}). Reporte para: ${mesDelReporte}`);
 
   try {
     const periodoInicio = Timestamp.fromDate(startDate);
@@ -53,13 +53,43 @@ async function procesarYEnviarResumenes(startDate, endDate, deps) {
           const userDoc = usersQuerySnapshot.docs[0];
           const userData = userDoc.data();
           if (userData.email && (userData.username || userData.nombre_completo)) {
+            const asistenciasDelUsuario = asistenciasAgrupadasTemporal[userIdFromTimeRecord];
+
+            // --- NUEVO: Lógica para calcular días faltantes ---
+            const diasConAsistencia = new Set();
+            asistenciasDelUsuario.forEach(asistencia => {
+              if (asistencia.startTime) {
+                const fechaAsistencia = asistencia.startTime.toDate().toLocaleDateString("es-MX", { timeZone: TIME_ZONE });
+                diasConAsistencia.add(fechaAsistencia);
+              }
+            });
+
+            const diasFaltantes = [];
+            const fechaActual = new Date(startDate.getTime());
+            while (fechaActual <= endDate) {
+              // Ignorar fines de semana (sábado=6, domingo=0) si se desea. Aquí no los ignoramos.
+              const fechaActualStr = fechaActual.toLocaleDateString("es-MX", { timeZone: TIME_ZONE });
+              if (!diasConAsistencia.has(fechaActualStr)) {
+                diasFaltantes.push(fechaActual.getUTCDate());
+              }
+              fechaActual.setUTCDate(fechaActual.getUTCDate() + 1);
+            }
+
+            let diasFaltantesStr = "";
+            if (diasFaltantes.length > 0) {
+              diasFaltantesStr = `Días del periodo sin registro de asistencia: ${diasFaltantes.join(", ")}.`;
+            }
+            // --- FIN NUEVO ---
+
             asistenciasPorUsuario[userIdFromTimeRecord] = {
               userInfo: {
                 userId: userIdFromTimeRecord,
                 username: userData.username || userData.nombre_completo || "Sin nombre de usuario",
                 email: userData.email,
               },
-              asistencias: asistenciasAgrupadasTemporal[userIdFromTimeRecord],
+              asistencias: asistenciasDelUsuario,
+              // --- NUEVO ---
+              diasFaltantesStr: diasFaltantesStr,
             };
           } else {
             logger.warn(`PROCESAR_RESUMENES_USER_INCOMPLETE: uid=${userIdFromTimeRecord} sin email o nombre.`);
@@ -83,7 +113,8 @@ async function procesarYEnviarResumenes(startDate, endDate, deps) {
     const promesasDeCorreo = usuariosParaProcesar.map(async userId => {
       const datosUsuario = asistenciasPorUsuario[userId];
       try {
-        const pdfBuffer = await generarPdfConPdfKit(datosUsuario, mesDelReporte, { TIME_ZONE, logger });
+        // --- MODIFICADO --- : Se pasa "periodoTipo" y "mesDelReporte" al PDF
+        const pdfBuffer = await generarPdfConPdfKit(datosUsuario, mesDelReporte, { TIME_ZONE, logger, periodoTipo });
         const pdfHeader = pdfBuffer.toString("ascii", 0, 5);
         if (!pdfBuffer || pdfBuffer.length < 100 || !pdfHeader.startsWith("%PDF-")) {
           throw new Error("PDF generado es inválido.");
