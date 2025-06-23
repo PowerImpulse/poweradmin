@@ -23,7 +23,8 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
   const TIME_ZONE = options.TIME_ZONE || "America/Mexico_City";
 
   return new Promise((resolve, reject) => {
-    const { userInfo, asistencias } = datosUsuario;
+    // --> MODIFICADO: Extraemos las nuevas propiedades del objeto
+    const { userInfo, asistencias, diasFaltantes, reporteMesAnio } = datosUsuario;
     const doc = new PDFDocument({
       size: "Letter",
       margins: { top: 28, bottom: 28, left: 30, right: 30 },
@@ -127,6 +128,7 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     });
 
     asistenciasOrdenadas.forEach(asistencia => {
+      // ... (código existente para dibujar cada fila de la tabla, sin cambios)
       const fechaInicioStr = asistencia.startTime ?
         asistencia.startTime.toDate().toLocaleDateString("es-MX", {
           timeZone: TIME_ZONE,
@@ -164,21 +166,31 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
         "N/A";
 
       const rowData = [
-
         fechaInicioStr,
         horaInicioStr,
+        asistencia.description || "N/A", // <-- Aquí había un error en tu código original, se invirtió description y startLocation
         asistencia.startLocation || "N/A",
         fechaFinStr,
         horaFinStr,
-        asistencia.description || "N/A",
         asistencia.endLocation || "N/A",
+      ];
+      // Corregí el orden de los datos para que coincida con las cabeceras
+      const correctedRowData = [
+        rowData[0], // Fecha Ini
+        rowData[1], // Hora Ini
+        rowData[2], // Descripción
+        rowData[3], // Ubic. Ini
+        rowData[4], // Fecha Fin
+        rowData[5], // Hora Fin
+        rowData[6], // Ubic. Fin
       ];
 
       let currentX = doc.page.margins.left;
       const currentRowY = doc.y;
       let maxYForRow = currentRowY;
 
-      rowData.forEach((text, i) => {
+      // Corregí el bucle para usar los datos en el orden correcto
+      correctedRowData.forEach((text, i) => {
         doc.text(text, currentX, currentRowY, {
           width: headerColWidths[i],
           align: "left",
@@ -195,53 +207,72 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
       }
     });
 
+    // --> INICIO DEL NUEVO BLOQUE: DÍAS DE INASISTENCIA
+    doc.moveDown(2);
+    if (diasFaltantes && diasFaltantes.length > 0) {
+      doc.fontSize(9).text(
+        `Días con inasistencia registrada en el periodo: ${diasFaltantes.join(", ")} de ${reporteMesAnio}.`, {
+          align: "left",
+        },
+      );
+    } else {
+      doc.fontSize(9).text(
+        "No se registraron inasistencias en este periodo.", {
+          align: "left",
+        },
+      );
+    }
+    // --> FIN DEL NUEVO BLOQUE
+
     doc.fontSize(10).moveDown(2);
 
     // --- Espacio para Firma ---
-    const firmaHeight = 65; // Altura del rectángulo de la firma
-    const firmaBlockWidth = 200; // Ancho del bloque de firma
-    const espacioSobreFirma = 15; // Espacio antes de la etiqueta "Firma del Técnico"
-    const espacioBajoFirma = 30; // Espacio que queremos dejar para el pie de página general
+    const firmaHeight = 65;
+    const firmaBlockWidth = 200;
+    const espacioSobreFirma = 15;
+    const espacioBajoFirma = 30;
 
-    // Calcular Y para la firma, asegurando espacio para el footer general
     let firmaYPosition = doc.page.height - doc.page.margins.bottom - espacioBajoFirma - firmaHeight;
 
-
-    if (doc.y + espacioSobreFirma + firmaHeight > firmaYPosition ) {
-      // Si el contenido actual está muy abajo, y no hay espacio suficiente para la firma Y el footer en esta página
-      if (doc.y + espacioSobreFirma + firmaHeight + espacioBajoFirma > doc.page.height - doc.page.margins.bottom) {
-        doc.addPage();
-
-        firmaYPosition = doc.page.height - doc.page.margins.bottom - espacioBajoFirma - firmaHeight;
-      } else {
-        // Hay espacio, poner la firma después del contenido actual, pero respetando el espacio del footer
-        firmaYPosition = doc.y + espacioSobreFirma;
-      }
+    // Se ajusta la lógica de paginación para la firma
+    const contentAndSignatureHeight = doc.y + espacioSobreFirma + firmaHeight + espacioBajoFirma;
+    if (contentAndSignatureHeight > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      // Al agregar página nueva, el contenido empieza arriba, la firma va al final
+      firmaYPosition = doc.page.height - doc.page.margins.bottom - espacioBajoFirma - firmaHeight;
+    } else {
+      // Hay espacio, poner la firma después del contenido actual
+      firmaYPosition = doc.y + espacioSobreFirma;
     }
 
-    // Calcular X para centrar el bloque de firma
+
     const firmaX = (doc.page.width - firmaBlockWidth) / 2;
 
     doc.fontSize(9).text("Firma de conformidad del colaborador:", firmaX, firmaYPosition, { align: "center", width: firmaBlockWidth });
-    doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight -12).stroke(); // Rectángulo debajo de la etiqueta
+    doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight -12).stroke();
     doc.fontSize(8).text("_________________________", firmaX, firmaYPosition + firmaHeight -25, { align: "center", width: firmaBlockWidth });
     doc.fontSize(8).text(`${userInfo.username || "N/A"}`, firmaX, firmaYPosition + firmaHeight -15, { align: "center", width: firmaBlockWidth });
 
 
     // Pie de página con nombre de empresa personalizado
-    const finalPageNumber = doc.bufferedPageRange().count > 0 ?
-      doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1 :
-      0;
-    doc.switchToPage(finalPageNumber);
-    doc.fontSize(8).text(
-      `Reporte generado el ${new Date().toLocaleDateString("es-MX", { timeZone: TIME_ZONE })}. ${empresaNombre}`,
-      doc.page.margins.left,
-      doc.page.height - doc.page.margins.bottom - 12,
-      {
-        align: "center",
-        width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
-      },
-    );
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+      doc.switchToPage(i);
+
+      // No añadir el pie de página general si interfiere con la firma
+      const spaceForFooter = doc.page.height - doc.page.margins.bottom - 12;
+      if (firmaYPosition + firmaHeight < spaceForFooter) {
+        doc.fontSize(8).text(
+          `Reporte generado el ${new Date().toLocaleDateString("es-MX", { timeZone: TIME_ZONE })}. ${empresaNombre}`,
+          doc.page.margins.left,
+          doc.page.height - doc.page.margins.bottom - 12,
+          {
+            align: "center",
+            width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+          },
+        );
+      }
+    }
 
 
     doc.end();
