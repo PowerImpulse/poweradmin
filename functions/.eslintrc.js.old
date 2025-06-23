@@ -1,0 +1,22 @@
+// .eslintrc.js
+module.exports = {
+  // ... (env, extends) ...
+  extends: [
+    "eslint:recommended",
+    "google",
+  ],
+  rules: {
+    "quotes": ["error", "double"],
+    "max-len": ["warn", { "code": 120, "ignoreUrls": true, "ignoreStrings": true, "ignoreTemplateLiterals": true, "ignoreComments": true }], // Hacerlo advertencia y más largo
+    "indent": ["warn", 2], // Hacerlo advertencia
+    "object-curly-spacing": ["warn", "always"], // Cambiar a 'always' y advertencia: { key: value }
+    "require-jsdoc": "off",
+    "no-trailing-spaces": "warn", // Hacerlo advertencia
+    "comma-dangle": ["warn", "always-multiline"], // Hacerlo advertencia
+    "linebreak-style": "off",
+    "no-console": "off", // Permitir console.log (ya que usamos logger, pero por si acaso)
+    "arrow-parens": ["warn", "as-needed"], // Más flexible con paréntesis en arrow functions
+    "eol-last": "off", // No requerir nueva línea al final del archivo
+    // Puedes añadir más reglas o cambiar "error" a "warn" o "off"
+  },
+};

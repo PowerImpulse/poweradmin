@@ -1,0 +1,37 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "time_record",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "endLocation",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "time",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "time_record",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "endLocation",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
