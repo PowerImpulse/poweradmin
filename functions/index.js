@@ -21,8 +21,8 @@ setGlobalOptions({
 });
 
 // Importar lógica de procesamiento y generación de PDF
-const enviarAsistenciasModule = require("./src/enviarAsistencias");
-const pdfGeneratorModule = require("./src/generarPdfKit");
+const enviarAsistenciasModule = require("./mails/enviarAsistencias");
+const pdfGeneratorModule = require("./mails/generarPdfKit");
 
 const servicioDeps = {
   db,
