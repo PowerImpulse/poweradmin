@@ -1,4 +1,6 @@
 // functions/src/seedData.js
+
+// IMPORTANTE: firebase emulators:start --only functions,firestore. para evitar que los datos se fuarden en producción
 async function seedDataLogic(req, res, deps) {
   const { db, Timestamp, logger } = deps;
   logger.info("SEED_TR_START: Iniciando carga de datos de prueba en time_record (CON MÁS ASISTENCIAS)");
