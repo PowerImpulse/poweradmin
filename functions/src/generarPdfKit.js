@@ -76,7 +76,7 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     });
     doc.moveDown(0.5);
     doc.fontSize(10);
-    doc.text(`Técnico: ${userInfo.username || "N/A"}`, { align: "right", width: rightBlockWidth });
+    doc.text(`Colaborador: ${userInfo.username || "N/A"}`, { align: "right", width: rightBlockWidth });
     doc.text(`ID de Usuario: ${userInfo.userId || "N/A"}`, { align: "right", width: rightBlockWidth });
     doc.text(`Email: ${userInfo.email || "N/A"}`, { align: "right", width: rightBlockWidth });
 
@@ -222,7 +222,7 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     // Calcular X para centrar el bloque de firma
     const firmaX = (doc.page.width - firmaBlockWidth) / 2;
 
-    doc.fontSize(9).text("Firma del Técnico:", firmaX, firmaYPosition, { align: "center", width: firmaBlockWidth });
+    doc.fontSize(9).text("Firma de conformidad del colaborador:", firmaX, firmaYPosition, { align: "center", width: firmaBlockWidth });
     doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight -12).stroke(); // Rectángulo debajo de la etiqueta
     doc.fontSize(8).text("_________________________", firmaX, firmaYPosition + firmaHeight -25, { align: "center", width: firmaBlockWidth });
     doc.fontSize(8).text(`${userInfo.username || "N/A"}`, firmaX, firmaYPosition + firmaHeight -15, { align: "center", width: firmaBlockWidth });
