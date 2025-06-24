@@ -3,20 +3,16 @@ import { initializeApp,  type FirebaseApp  } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
 
-
-
-// Tu configuración de Firebase desde la consola de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDSa5aLL0WwFGCfJTCNj4ATKmOhJF9zEDQ",
-  authDomain: "powerxperts-3d795.firebaseapp.com",
-  projectId: "powerxperts-3d795",
-  storageBucket: "powerxperts-3d795.appspot.com",
-  messagingSenderId: "792096008771",
-  appId: "1:792096008771:web:c73874a13237a61444c2f6"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 
-// Inicializa Firebase
 const app: FirebaseApp = initializeApp(firebaseConfig); 
 const auth = getAuth(app);
 const dbUsers = getFirestore(app);
