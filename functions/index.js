@@ -93,6 +93,7 @@ exports.enviarResumenSegundaQuincena = onSchedule(
 
 // --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
 exports.deleteUser = onCall(userManagement.deleteUser);
+exports.setUserRole = onCall(userManagement.setUserRole);
 
 // --- FUNCIONES DE PRUEBA ---
 // const { onRequest } = require("firebase-functions/v2/https");

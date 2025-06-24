@@ -8,6 +8,7 @@
   import AccionesUsuario from "$lib/usuarios/AccionesUsuario.svelte";
   import type { Usuario } from '$lib/types' // TIPOS TS
   import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
+  import { BarLoader } from "svelte-loading-spinners";
 
   const usersFirebase = collection(dbUsers, "users");
   const auth = getAuth();
@@ -38,48 +39,44 @@ onSnapshot(usersFirebase, (querySnapshot) => {
       });
   };
 
-  const eliminarUsuario = async (uid:string) => {
-    try {
-        await deleteDoc(doc(dbUsers, "users", uid));
-    } catch (e: any) {
-        error = `Error al eliminar usuario: ${e.message}`;
-    }
-};
+//   const eliminarUsuario = async (uid:string) => {
+//     try {
+//         await deleteDoc(doc(dbUsers, "users", uid));
+//     } catch (e: any) {
+//         error = `Error al eliminar usuario: ${e.message}`;
+//     }
+// };
 
-  let columns: GridColumn<Usuario>[] = [
-      { 
-          key: 'infoUser', 
-          title: 'Usuario', 
-          //@ts-ignore
-          renderComponent: UsuarioEmail, 
-          accessor: (row) => ({ email: row.email, username: row.username }),
-          sortValue: (row: Usuario) => {
-            return `${row.username} ${row.email}`
-        } 
-      },
-      { key: 'role', title: 'Rol' },
-      { key: 'isBlocked', title: 'Estado', accessor: (row) => row.isBlocked ? 'Bloqueado' : 'Activo' },
-      { key: 'created_at', title: 'Creado en', accessor: (row) => row.created_at?.toDate().toLocaleString() },
-      {
-          key: 'actions',
-          title: 'Acciones',
-          sortable: false,
-          accessor: (row) => {
-         
-            return {
-                value: row,
-                onBloquearDesbloquear: () => bloquearDesbloquearUsuario(row),
-                onEliminar: () => {
-              
-                    eliminarUsuario(row.uid);
-                },
-            };
-            
-          },
-          //@ts-ignore
-          renderComponent: AccionesUsuario,
-      },
+const handleUserDeleted = (uid: string) => {
+    usuarios = usuarios.filter(u => u.uid !== uid);
+  };
+
+
+ let columns: GridColumn<Usuario>[] = [
+    { 
+        key: 'infoUser', 
+        title: 'Usuario',
+        renderComponent: UsuarioEmail as any,
+        accessor: (row) => ({ email: row.email, username: row.username }),
+        sortValue: (row) => `${row.username} ${row.email}`
+    },
+    { key: 'role', title: 'Rol' },
+    { key: 'isBlocked', title: 'Estado', accessor: (row) => row.isBlocked ? 'Bloqueado' : 'Activo' },
+    { key: 'created_at', title: 'Creado en', accessor: (row) => row.created_at?.toDate().toLocaleString() },
+    {
+      key: 'actions',
+      title: 'Acciones',
+      sortable: false,
+      renderComponent: AccionesUsuario as any,
+      
+         accessor: (row: Usuario) => ({
+        usuario: row,
+        onUserDeleted: handleUserDeleted,
+        onToggleBlock: () => bloquearDesbloquearUsuario(row) // Pasamos el objeto completo como pedía tu función original
+      })
+    },
   ];
+
 
   let paging = {
       itemsPerPage: 50,
@@ -130,7 +127,7 @@ $: filters = [
 
 
 {#if loading}
-  <p>Cargando...</p>
+   <BarLoader />
 {:else}
 <p class="error">{error}</p>
   <Grid data={usuarios} bind:paging={paging} bind:columns bind:selectedRows  bind:filters />

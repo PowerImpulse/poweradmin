@@ -49,6 +49,41 @@ const deleteUser = async (data, context) => {
   }
 };
 
-module.exports = {
-  deleteUser,
+const setUserRole = async (data, context) => {
+  // Verificación de permisos
+  if (context.auth.token.role !== 'admin' && context.auth.token.role !== 'superadmin') {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Solo los administradores pueden asignar roles.'
+    );
+  }
+
+  const { uid, role } = data;
+  const validRoles = ['admin', 'superadmin', 'gerente', 'tecnico']; // Lista de roles válidos
+
+  if (!uid || !role || !validRoles.includes(role)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Se requiere un "uid" y un "role" válido.'
+    );
+  }
+
+  try {
+    // Asignar el Custom Claim al usuario
+    await admin.auth().setCustomUserClaims(uid, { role: role });
+
+    // También actualizamos el rol en el documento de Firestore para consistencia
+    await admin.firestore().collection('users').doc(uid).update({ role: role });
+
+    return { success: true, message: `Rol "${role}" asignado a ${uid}.` };
+  } catch (error) {
+    functions.logger.error(`Error setting role for user ${uid}:`, error);
+    throw new functions.https.HttpsError('internal', 'Ocurrió un error al asignar el rol.');
+  }
 };
+
+
+module.exports = {
+  deleteUser, setUserRole
+};
+

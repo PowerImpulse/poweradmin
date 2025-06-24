@@ -2,8 +2,61 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // --- FUNCIÓN HELPER PARA VERIFICAR ROLES ---
+    // Esta función nos ayuda a no repetir código y a manejar la inconsistencia de los roles.
+    function esTecnico() {
+      let rolesTecnico = ['tecnico', 'Técnico', 'empleado'];
+      return request.auth.token.role in rolesTecnico;
+    }
+
+    function esAdmin() {
+      let rolesAdmin = ['admin', 'superadmin', 'gerente'];
+      return request.auth.token.role in rolesAdmin;
+    }
+
+    // --- REGLAS PARA LA COLECCIÓN 'users' (igual que antes, ya es robusta) ---
+    match /users/{userId} {
+      allow read: if esAdmin() || request.auth.uid == userId;
+      allow create: if esAdmin();
+      allow update: if esAdmin() || (request.auth.uid == userId && request.resource.data.role == resource.data.role);
+      allow delete: if false; 
+    }
+
+    // --- REGLAS PARA LA COLECCIÓN 'time_record' (asistencias) ---
+    match /time_record/{recordId} {
+      // Un admin puede leer todo. Un técnico puede leer SUS PROPIAS asistencias.
+      allow read: if esAdmin() || (esTecnico() && request.auth.uid == resource.data.userId);
+
+      // Un técnico puede crear/actualizar/borrar SUS PROPIAS asistencias.
+      // Usamos `request.auth.uid == request.resource.data.userId` para asegurar que solo modifique sus datos.
+      allow write: if esTecnico() && request.auth.uid == request.resource.data.userId;
+    }
+
+    // --- ¡NUEVO! REGLAS PARA LA COLECCIÓN 'reportes' (ejemplo) ---
+    match /reportes/{reporteId} {
+      // Asumimos que un técnico puede crear reportes.
+      allow create: if esTecnico();
+      
+      // Un admin puede leer todos. Un técnico solo los suyos (si hay un campo 'userId').
+      // Suponiendo que los reportes tienen un campo 'creadoPorUid' o similar.
+      allow read: if esAdmin() || (esTecnico() && request.auth.uid == resource.data.creadoPorUid);
+
+      // ¿Quién puede actualizar o borrar? Depende de tu lógica de negocio.
+      // Por ejemplo, solo un admin puede borrar, pero un técnico puede editar el suyo.
+      allow update: if esAdmin() || (esTecnico() && request.auth.uid == resource.data.creadoPorUid);
+      allow delete: if esAdmin();
+    }
+    
+    // --- ¡NUEVO! REGLA GENÉRICA PARA OTRAS COLECCIONES ---
+    // Esta regla es un "comodín". Le dice a Firestore:
+    // "Para cualquier otra colección que no he definido arriba (ej. 'equipos', 'tareas')..."
     match /{document=**} {
+      // "...permite la lectura y escritura si el usuario está autenticado".
+      // Esta es una regla permisiva, ideal para desarrollo o si la lógica de negocio
+      // no requiere restricciones estrictas por ahora en esas otras colecciones.
       allow read, write: if request.auth != null;
     }
+
   }
 }
