@@ -1,5 +1,5 @@
 // /src/lib/client.ts
-import { initializeApp,  type FirebaseApp  } from 'firebase/app';
+import { initializeApp,  type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
 
@@ -11,7 +11,6 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
-
 
 const app: FirebaseApp = initializeApp(firebaseConfig); 
 const auth = getAuth(app);

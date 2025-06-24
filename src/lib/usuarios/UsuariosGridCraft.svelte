@@ -9,7 +9,6 @@
   import type { Usuario } from '$lib/types' // TIPOS TS
   import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
 
-
   const usersFirebase = collection(dbUsers, "users");
   const auth = getAuth();
 
@@ -17,7 +16,6 @@
   let selectedRows: Usuario[] = [];
   let loading = true;
   let error = "";
-
 
 onSnapshot(usersFirebase, (querySnapshot) => {
     let listaUsuarios: Usuario[] = [];
@@ -34,23 +32,19 @@ onSnapshot(usersFirebase, (querySnapshot) => {
     loading = false;
 });
 
-
-
   const bloquearDesbloquearUsuario = async (usuario: Usuario) => {
       await updateDoc(doc(dbUsers, "users", usuario.uid), {
           isBlocked: !usuario.isBlocked,
       });
   };
 
-  const eliminarUsuario = async (uid: string) => {
+  const eliminarUsuario = async (uid:string) => {
     try {
         await deleteDoc(doc(dbUsers, "users", uid));
     } catch (e: any) {
         error = `Error al eliminar usuario: ${e.message}`;
     }
 };
-
-
 
   let columns: GridColumn<Usuario>[] = [
       { 

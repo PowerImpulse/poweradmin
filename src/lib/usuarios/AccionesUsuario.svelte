@@ -1,64 +1,104 @@
 <script lang="ts">
   // src/lib/usuarios/AccionesUsuario.svelte
-  import type { Usuario } from '$lib/types'; // Asegúrate que Usuario incluya al menos 'uid' y 'isBlocked'
-  import { CheckmarkOutline, IbmEloMethodComposer, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
+  import { CheckmarkOutline, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
   import { getFunctions, httpsCallable } from 'firebase/functions';
   import { app } from '$lib/client';
-
   
+  // --- 2. PROPS Y ESTADO ---
 
-  // Asumimos que el tipo Usuario que llega aquí SIEMPRE tiene 'uid'
-  export let value: Usuario & { uid: string; isBlocked: boolean }; // Hacemos explícito que esperamos uid e isBlocked
+  // El objeto usuario que representa la fila
+  export let usuario: {
+    uid: string;
+    isBlocked: boolean;
+  };
 
-  export let onBloquearDesbloquear: (value: Usuario) => void;
-  export let onEliminar: (uid: string) => void; // Cambiado para recibir solo uid, como en el componente padre
+  // --- ¡NUEVO! Props de Callback ---
+  // El padre nos pasará una función para ejecutar cuando el usuario sea eliminado.
+  export let onUserDeleted: (uid: string) => void;
+  // El padre nos pasará una función para el bloqueo/desbloqueo.
+  export let onToggleBlock: (uid: string) => void;
 
-  let isBlocked = value.isBlocked;
+  // Estado local del componente
+  let isDeleting = false;
+  let isBlocking = false;
+  let errorMessage = '';
 
+  // --- 3. LÓGICA DE ELIMINACIÓN (Ahora llama a la prop de callback) ---
+  async function handleEliminar() {
+    isDeleting = true;
+    errorMessage = '';
+
+    try {
+      const functions = getFunctions(app, 'us-west4');
+      const deleteUserCallable = httpsCallable(functions, 'deleteUser');
+      
+      await deleteUserCallable({ uid: usuario.uid });
+
+      // --- ¡CLAVE! Llamar a la función que nos pasó el padre ---
+      onUserDeleted(usuario.uid);
+      
+    } catch (error: any) {
+      console.error("Error al eliminar usuario:", error);
+      errorMessage = error.message;
+    } finally {
+      isDeleting = false;
+    }
+  }
+
+  // --- 4. LÓGICA DE BLOQUEO (Ahora llama a la prop de callback) ---
   function handleBloquearDesbloquear() {
-      onBloquearDesbloquear(value);
-      isBlocked = !isBlocked; // Actualiza el estado local para reflejar el cambio visualmente
+    // Aquí, en el futuro, llamarías a la Cloud Function 'toggleUserBlock'
+    // y luego llamarías al callback para notificar al padre.
+    onToggleBlock(usuario.uid);
   }
-
-  function handleEliminar() {
-      // Pasamos solo el uid, como espera la función en UsuariosGridCraft.svelte
-      onEliminar(value.uid);
-  }
+  
 </script>
 
-<div class="flex gap-4">
-  <button class={isBlocked ? 'Desbloquear' : 'Bloquear'} on:click|preventDefault={handleBloquearDesbloquear} title={isBlocked ? 'Desbloquear Usuario' : 'Bloquear Usuario'}>
-    {#if isBlocked}
-      <NullSign class="usericon stroke-gray" />
+<div class="flex gap-4" class:pointer-events-none={isDeleting || isBlocking}>
+  
+  <!-- Botón Bloquear/Desbloquear -->
+  <button 
+    class={usuario.isBlocked ? 'text-gray-500' : 'text-green-500'} 
+    on:click|preventDefault={handleBloquearDesbloquear} 
+    title={usuario.isBlocked ? 'Desbloquear Usuario' : 'Bloquear Usuario'}
+    disabled={isDeleting || isBlocking}
+  >
+    {#if isBlocking}
+      <span>...</span>
+    {:else if usuario.isBlocked}
+      <NullSign class="usericon" />
     {:else}
-      <CheckmarkOutline class="usericon stroke-green-5" />
+      <CheckmarkOutline class="usericon" />
     {/if}
-    <span class="bg-gray-5">{isBlocked ? 'Desbloquear' : 'Bloquear'}</span>
+    <span class="bg-gray-500">{usuario.isBlocked ? 'Desbloquear' : 'Bloquear'}</span>
   </button>
 
-  <button on:click|preventDefault={() => {
-      if (confirm('¿Estás seguro de eliminar este usuario?')) {
-        handleEliminar();
-      }
-    }} title="Eliminar Usuario">
-    <TrashCan class="usericon stroke-red "/>
-    <span class="bg-red-6">Eliminar</span>
+  <!-- Botón Eliminar -->
+  <button 
+    class="text-red-600"
+    on:click|preventDefault={() => { if (confirm('¿Estás seguro de eliminar este usuario?')) { handleEliminar(); } }}
+    title="Eliminar Usuario"
+    disabled={isDeleting || isBlocking}
+  >
+    {#if isDeleting}
+      <span>...</span>
+    {:else}
+      <TrashCan class="usericon"/>
+    {/if}
+    <span class="bg-red-600">Eliminar</span>
   </button>
-
-  <!-- Botón Editar (funcionalidad futura)
-  <button title="Editar">
-    <IbmEloMethodComposer class="usericon stroke-blue" />
-    <span class="bg-blue-8">Editar</span>
-  </button>
- -->
-
-  <a href={`/panel/usuarios/${value.uid}`} title="Ver perfil" class="button-like">
-    <Identification class="usericon stroke-zinc-8 stroke-1" />
-    <span class="bg-blue">Ver Perfil</span>
+  
+  <!-- Enlace Ver Perfil -->
+  <a href={`/panel/usuarios/${usuario.uid}`} title="Ver perfil" class="button-like text-zinc-800">
+    <Identification class="usericon stroke-1" />
+    <span class="bg-blue-500">Ver Perfil</span>
   </a>
-  <!-- ******************************************************************** -->
 
 </div>
+
+{#if errorMessage}
+  <p class="text-xs text-red-500 mt-1">{errorMessage}</p>
+{/if}
 
 <style>
   /* Estilos generales para botones y el enlace que parece botón */
