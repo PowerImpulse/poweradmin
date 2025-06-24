@@ -1,13 +1,12 @@
-// functions/src/enviarAsistencias.js
+// functions/mails/enviarAsistencias.js
 
-async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
+async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo = "Periodo") {
   const { db, Timestamp, logger, generarPdfConPdfKit, TIME_ZONE } = deps;
 
   const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const mesDelReporte = `${meses[startDate.getUTCMonth()]} de ${startDate.getUTCFullYear()}`;
 
-  // --- MODIFICACIÓN 1 --- : Se añade periodoTipo al log
-  logger.info(`PROCESAR_RESUMENES: Iniciando para periodo ${periodoTipo} (${startDate.toISOString()} a ${endDate.toISOString()}). Reporte para: ${mesDelReporte}`);
+  logger.info(`PROCESAR_RESUMENES: Iniciando para ${periodoTipo} (${startDate.toISOString()} a ${endDate.toISOString()}).`);
 
   try {
     const periodoInicio = Timestamp.fromDate(startDate);
@@ -55,32 +54,31 @@ async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
           if (userData.email && (userData.username || userData.nombre_completo)) {
             const asistenciasDelUsuario = asistenciasAgrupadasTemporal[userIdFromTimeRecord];
 
-            // --- NUEVO: Lógica para calcular días faltantes ---
-            const diasConAsistencia = new Set();
-            asistenciasDelUsuario.forEach(asistencia => {
-              if (asistencia.startTime) {
-                const fechaAsistencia = asistencia.startTime.toDate().toLocaleDateString("es-MX", { timeZone: TIME_ZONE });
-                diasConAsistencia.add(fechaAsistencia);
-              }
-            });
-
+            // CÁLCULO DE DÍAS FALTANTES
+            const diasConAsistencia = new Set(
+              asistenciasDelUsuario.map(a => a.startTime.toDate().getUTCDate()),
+            );
             const diasFaltantes = [];
             const fechaActual = new Date(startDate.getTime());
             while (fechaActual <= endDate) {
-              // Ignorar fines de semana (sábado=6, domingo=0) si se desea. Aquí no los ignoramos.
-              const fechaActualStr = fechaActual.toLocaleDateString("es-MX", { timeZone: TIME_ZONE });
-              if (!diasConAsistencia.has(fechaActualStr)) {
+              if (!diasConAsistencia.has(fechaActual.getUTCDate())) {
                 diasFaltantes.push(fechaActual.getUTCDate());
               }
               fechaActual.setUTCDate(fechaActual.getUTCDate() + 1);
             }
 
-            let diasFaltantesStr = "";
-            if (diasFaltantes.length > 0) {
-              diasFaltantesStr = `Días del periodo sin registro de asistencia: ${diasFaltantes.join(", ")}.`;
-            }
-            // --- FIN NUEVO ---
+            // CÁLCULO DE HORAS TRABAJADAS
+            let totalMillis = 0;
+            asistenciasDelUsuario.forEach(asistencia => {
+              if (asistencia.startTime && asistencia.endTime) {
+                totalMillis += asistencia.endTime.toMillis() - asistencia.startTime.toMillis();
+              }
+            });
+            const horas = Math.floor(totalMillis / (1000 * 60 * 60));
+            const minutos = Math.floor((totalMillis % (1000 * 60 * 60)) / (1000 * 60));
+            const horasTrabajadasStr = `Total de horas trabajadas en el periodo: ${horas} horas y ${minutos} minutos.`;
 
+            // Construir el objeto de datos para este usuario
             asistenciasPorUsuario[userIdFromTimeRecord] = {
               userInfo: {
                 userId: userIdFromTimeRecord,
@@ -88,8 +86,8 @@ async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
                 email: userData.email,
               },
               asistencias: asistenciasDelUsuario,
-              // --- NUEVO ---
-              diasFaltantesStr: diasFaltantesStr,
+              diasFaltantes: diasFaltantes,
+              horasTrabajadasStr: horasTrabajadasStr,
             };
           } else {
             logger.warn(`PROCESAR_RESUMENES_USER_INCOMPLETE: uid=${userIdFromTimeRecord} sin email o nombre.`);
@@ -113,7 +111,6 @@ async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
     const promesasDeCorreo = usuariosParaProcesar.map(async userId => {
       const datosUsuario = asistenciasPorUsuario[userId];
       try {
-        // --- MODIFICADO --- : Se pasa "periodoTipo" y "mesDelReporte" al PDF
         const pdfBuffer = await generarPdfConPdfKit(datosUsuario, mesDelReporte, { TIME_ZONE, logger, periodoTipo });
         const pdfHeader = pdfBuffer.toString("ascii", 0, 5);
         if (!pdfBuffer || pdfBuffer.length < 100 || !pdfHeader.startsWith("%PDF-")) {
@@ -131,8 +128,8 @@ async function procesarYEnviarResumenes(startDate, endDate, deps, periodoTipo) {
           bcc: [copiaOcultaEmail],
           message: {
             subject: `Resumen de Asistencias - ${mesDelReporte}`,
-            html: `<p>Hola ${datosUsuario.userInfo.username}, ...</p>`, // Cuerpo HTML conciso
-            text: `Hola ${datosUsuario.userInfo.username},\n\nAdjunto tu resumen...\n\nSaludos.`, // Cuerpo Texto conciso
+            html: `<p>Hola ${datosUsuario.userInfo.username}, se adjunta tu reporte de asistencias.</p>`,
+            text: `Hola ${datosUsuario.userInfo.username},\n\nSe adjunta tu reporte de asistencias.\n\nSaludos.`,
             attachments: [{ filename: nombreArchivo, content: pdfBase64, encoding: "base64", contentType: "application/pdf" }],
           },
         };

@@ -1,3 +1,5 @@
+// functions/mails/generarPdfKit.js
+
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
@@ -20,11 +22,11 @@ const empresasMap = [
 ];
 
 function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
-  const TIME_ZONE = options.TIME_ZONE || "America/Mexico_City";
+  const { TIME_ZONE = "America/Mexico_City", periodoTipo = "" } = options;
 
   return new Promise((resolve, reject) => {
-    // --> MODIFICADO: Extraemos las nuevas propiedades del objeto
-    const { userInfo, asistencias, diasFaltantes, reporteMesAnio } = datosUsuario;
+    // Extraer todos los datos necesarios del objeto de usuario
+    const { userInfo, asistencias, diasFaltantes, horasTrabajadasStr } = datosUsuario;
     const doc = new PDFDocument({
       size: "Letter",
       margins: { top: 28, bottom: 28, left: 30, right: 30 },
@@ -35,8 +37,7 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     doc.on("end", () => resolve(Buffer.concat(buffers)));
     doc.on("error", reject);
 
-    // Detectar tema dinámico por dominio del email ////////////
-
+    // --- ENCABEZADO Y LOGO DINÁMICO ---
     let logoToUsePath; let colorPrincipal; let empresaNombre;
     const match = empresasMap.find(cfg => userInfo.email?.toLowerCase().includes(cfg.domain));
     if (match) {
@@ -49,7 +50,6 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
       colorPrincipal = "#000000";
       empresaNombre = "Reporte General";
     }
-    // Mostrar logo (dinámico) //////////////
 
     const logoX = doc.page.margins.left;
     const logoY = doc.page.margins.top;
@@ -70,7 +70,6 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
       doc.fontSize(8).text("[Error al cargar logo]", logoX, logoY);
     }
 
-    // Encabezado /////////////
     doc.fontSize(16).text("Resumen de Asistencias", rightBlockX, logoY, {
       width: rightBlockWidth,
       align: "right",
@@ -81,12 +80,18 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     doc.text(`ID de Usuario: ${userInfo.userId || "N/A"}`, { align: "right", width: rightBlockWidth });
     doc.text(`Email: ${userInfo.email || "N/A"}`, { align: "right", width: rightBlockWidth });
 
-    doc.y = logoY + logoHeight + 30;
-    doc.moveDown(1);
-    doc.fontSize(12).text(`Periodo: ${mesReporteStr}`, { align: "center" });
-    doc.moveDown(1);
+    // --- TÍTULO DEL PERIODO (con tipo de quincena) ---
+    doc.moveDown(0.5); // Añadir un pequeño espacio
+    const tituloPeriodo = `Periodo: ${periodoTipo}, ${mesReporteStr}`;
+    doc.fontSize(12).text(tituloPeriodo, { // Se puede ajustar el tamaño de fuente si se prefiere
+      align: "right",
+      width: rightBlockWidth,
 
-    //  Línea decorativa con color personalizado ///////////////
+    });
+
+    doc.y = logoY + logoHeight + 70;
+
+
     const lineY = doc.y;
     doc.save();
     doc.lineWidth(5)
@@ -97,6 +102,7 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     doc.restore();
     doc.moveDown(2);
 
+    // --- TABLA DE ASISTENCIAS ---
     const headers = ["Fecha Ini", "Hora Ini", "Descripción", "Ubic. Ini", "Fecha Fin", "Hora Fin", "Ubic. Fin"];
     const headerColWidths = [60, 50, 120, 70, 60, 50, 70];
     const cellPadding = 5;
@@ -128,69 +134,27 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
     });
 
     asistenciasOrdenadas.forEach(asistencia => {
-      // ... (código existente para dibujar cada fila de la tabla, sin cambios)
-      const fechaInicioStr = asistencia.startTime ?
-        asistencia.startTime.toDate().toLocaleDateString("es-MX", {
-          timeZone: TIME_ZONE,
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }) :
-        "N/A";
+      const fechaInicioStr = asistencia.startTime ? asistencia.startTime.toDate().toLocaleDateString("es-MX", { timeZone: TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric" }) : "N/A";
+      const horaInicioStr = asistencia.startTime ? asistencia.startTime.toDate().toLocaleTimeString("es-MX", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false }) : "N/A";
+      const fechaFinStr = asistencia.endTime ? asistencia.endTime.toDate().toLocaleDateString("es-MX", { timeZone: TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric" }) : "N/A";
+      const horaFinStr = asistencia.endTime ? asistencia.endTime.toDate().toLocaleTimeString("es-MX", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false }) : "N/A";
 
-      const horaInicioStr = asistencia.startTime ?
-        asistencia.startTime.toDate().toLocaleTimeString("es-MX", {
-          timeZone: TIME_ZONE,
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }) :
-        "N/A";
-
-      const fechaFinStr = asistencia.endTime ?
-        asistencia.endTime.toDate().toLocaleDateString("es-MX", {
-          timeZone: TIME_ZONE,
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }) :
-        "N/A";
-
-      const horaFinStr = asistencia.endTime ?
-        asistencia.endTime.toDate().toLocaleTimeString("es-MX", {
-          timeZone: TIME_ZONE,
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }) :
-        "N/A";
-
+      // El orden aquí debe coincidir con los encabezados
       const rowData = [
         fechaInicioStr,
         horaInicioStr,
-        asistencia.description || "N/A", // <-- Aquí había un error en tu código original, se invirtió description y startLocation
+        asistencia.description || "N/A",
         asistencia.startLocation || "N/A",
         fechaFinStr,
         horaFinStr,
         asistencia.endLocation || "N/A",
-      ];
-      // Corregí el orden de los datos para que coincida con las cabeceras
-      const correctedRowData = [
-        rowData[0], // Fecha Ini
-        rowData[1], // Hora Ini
-        rowData[2], // Descripción
-        rowData[3], // Ubic. Ini
-        rowData[4], // Fecha Fin
-        rowData[5], // Hora Fin
-        rowData[6], // Ubic. Fin
       ];
 
       let currentX = doc.page.margins.left;
       const currentRowY = doc.y;
       let maxYForRow = currentRowY;
 
-      // Corregí el bucle para usar los datos en el orden correcto
-      correctedRowData.forEach((text, i) => {
+      rowData.forEach((text, i) => {
         doc.text(text, currentX, currentRowY, {
           width: headerColWidths[i],
           align: "left",
@@ -207,26 +171,34 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
       }
     });
 
-    // --> INICIO DEL NUEVO BLOQUE: DÍAS DE INASISTENCIA
-    doc.moveDown(2);
-    if (diasFaltantes && diasFaltantes.length > 0) {
-      doc.fontSize(9).text(
-        `Días con inasistencia registrada en el periodo: ${diasFaltantes.join(", ")} de ${reporteMesAnio}.`, {
-          align: "left",
-        },
-      );
-    } else {
-      doc.fontSize(9).text(
-        "No se registraron inasistencias en este periodo.", {
-          align: "left",
-        },
-      );
-    }
-    // --> FIN DEL NUEVO BLOQUE
-
+    // --- RESUMEN DEBAJO DE LA TABLA (días faltantes y horas) ---
     doc.fontSize(10).moveDown(2);
 
-    // --- Espacio para Firma ---
+    // --- CORRECCIÓN: Definir explícitamente la posición y el ancho ---
+    const resumenX = doc.page.margins.left;
+    const resumenWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+    // Mostrar días faltantes si existen
+    if (diasFaltantes && diasFaltantes.length > 0) {
+      const faltasTexto = `Días del periodo sin registro de asistencia: ${diasFaltantes.join(", ")}.`;
+      doc.fontSize(9).text(faltasTexto, resumenX, doc.y, {
+        width: resumenWidth,
+        align: "left",
+      });
+      doc.moveDown(0.5); // Espacio entre líneas
+    }
+
+    // Mostrar horas trabajadas si existen
+    if (horasTrabajadasStr) {
+      doc.fontSize(9).text(horasTrabajadasStr, resumenX, doc.y, {
+        width: resumenWidth,
+        align: "left",
+      });
+      doc.moveDown(1); // Espacio entre líneas
+    }
+
+
+    // --- ESPACIO PARA FIRMA ---
     const firmaHeight = 65;
     const firmaBlockWidth = 200;
     const espacioSobreFirma = 15;
@@ -234,46 +206,33 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
 
     let firmaYPosition = doc.page.height - doc.page.margins.bottom - espacioBajoFirma - firmaHeight;
 
-    // Se ajusta la lógica de paginación para la firma
-    const contentAndSignatureHeight = doc.y + espacioSobreFirma + firmaHeight + espacioBajoFirma;
-    if (contentAndSignatureHeight > doc.page.height - doc.page.margins.bottom) {
+    if (doc.y + espacioSobreFirma + firmaHeight + espacioBajoFirma > doc.page.height - doc.page.margins.bottom) {
       doc.addPage();
-      // Al agregar página nueva, el contenido empieza arriba, la firma va al final
       firmaYPosition = doc.page.height - doc.page.margins.bottom - espacioBajoFirma - firmaHeight;
     } else {
-      // Hay espacio, poner la firma después del contenido actual
       firmaYPosition = doc.y + espacioSobreFirma;
     }
-
 
     const firmaX = (doc.page.width - firmaBlockWidth) / 2;
 
     doc.fontSize(9).text("Firma de conformidad del colaborador:", firmaX, firmaYPosition, { align: "center", width: firmaBlockWidth });
-    doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight -12).stroke();
-    doc.fontSize(8).text("_________________________", firmaX, firmaYPosition + firmaHeight -25, { align: "center", width: firmaBlockWidth });
-    doc.fontSize(8).text(`${userInfo.username || "N/A"}`, firmaX, firmaYPosition + firmaHeight -15, { align: "center", width: firmaBlockWidth });
+    doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight - 12).stroke();
+    doc.fontSize(8).text("_________________________", firmaX, firmaYPosition + firmaHeight - 25, { align: "center", width: firmaBlockWidth });
+    doc.fontSize(8).text(`${userInfo.username || "N/A"}`, firmaX, firmaYPosition + firmaHeight - 15, { align: "center", width: firmaBlockWidth });
 
-
-    // Pie de página con nombre de empresa personalizado
-    const pages = doc.bufferedPageRange();
-    for (let i = 0; i < pages.count; i++) {
-      doc.switchToPage(i);
-
-      // No añadir el pie de página general si interfiere con la firma
-      const spaceForFooter = doc.page.height - doc.page.margins.bottom - 12;
-      if (firmaYPosition + firmaHeight < spaceForFooter) {
-        doc.fontSize(8).text(
-          `Reporte generado el ${new Date().toLocaleDateString("es-MX", { timeZone: TIME_ZONE })}. ${empresaNombre}`,
-          doc.page.margins.left,
-          doc.page.height - doc.page.margins.bottom - 12,
-          {
-            align: "center",
-            width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
-          },
-        );
-      }
-    }
-
+    // --- PIE DE PÁGINA ---
+    const finalPageNumber = doc.bufferedPageRange().count > 0 ?
+      doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1 : 0;
+    doc.switchToPage(finalPageNumber);
+    doc.fontSize(8).text(
+      `Reporte generado el ${new Date().toLocaleDateString("es-MX", { timeZone: TIME_ZONE })}. ${empresaNombre}`,
+      doc.page.margins.left,
+      doc.page.height - doc.page.margins.bottom - 12,
+      {
+        align: "center",
+        width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+      },
+    );
 
     doc.end();
   });

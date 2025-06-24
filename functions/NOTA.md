@@ -4,6 +4,7 @@ firebase deploy --only functions
 firebase deploy --only functions
 
 firebase emulators:start --only functions,firestore
+firebase emulators:start --only functions,firestore
 
 firebase emulators:start --only functions,firestore --import=./data/record.json
 
