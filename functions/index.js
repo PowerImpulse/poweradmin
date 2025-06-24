@@ -7,6 +7,10 @@ const admin = require("firebase-admin");
 const { Timestamp } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
 
+// Importar el módulo de gestión de usuarios
+const { onCall } = require("firebase-functions/v2/https");
+const userManagement = require("./users/manageUsers");
+
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
@@ -86,6 +90,9 @@ exports.enviarResumenSegundaQuincena = onSchedule(
       logger.error("SCHED_QUINCENA_2_ERROR:", error);
     }
   });
+
+// --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
+exports.deleteUser = onCall(userManagement.deleteUser);
 
 // --- FUNCIONES DE PRUEBA ---
 // const { onRequest } = require("firebase-functions/v2/https");
