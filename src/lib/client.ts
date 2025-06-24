@@ -1,5 +1,5 @@
-// firebaseClient.js
-import { initializeApp } from 'firebase/app';
+// /src/lib/client.ts
+import { initializeApp,  type FirebaseApp  } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
 
@@ -17,12 +17,14 @@ const firebaseConfig = {
 
 
 // Inicializa Firebase
-const app = initializeApp(firebaseConfig);
+const app: FirebaseApp = initializeApp(firebaseConfig); 
 const auth = getAuth(app);
 const dbUsers = getFirestore(app);
 const dbTareas = getFirestore(app);
 const dbEquipos = getFirestore(app);
 const dbTimeRecord = getFirestore(app);
 
-export { dbUsers, dbEquipos, dbTimeRecord, auth, dbTareas };
+export { app, dbUsers, dbEquipos, dbTimeRecord, auth, dbTareas };
+
+
 

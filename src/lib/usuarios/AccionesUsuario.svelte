@@ -2,6 +2,10 @@
   // src/lib/usuarios/AccionesUsuario.svelte
   import type { Usuario } from '$lib/types'; // Asegúrate que Usuario incluya al menos 'uid' y 'isBlocked'
   import { CheckmarkOutline, IbmEloMethodComposer, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
+  import { getFunctions, httpsCallable } from 'firebase/functions';
+  import { app } from '$lib/client';
+
+  
 
   // Asumimos que el tipo Usuario que llega aquí SIEMPRE tiene 'uid'
   export let value: Usuario & { uid: string; isBlocked: boolean }; // Hacemos explícito que esperamos uid e isBlocked
