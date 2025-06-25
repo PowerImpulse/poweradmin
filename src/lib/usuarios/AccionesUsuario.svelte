@@ -2,34 +2,29 @@
   // src/lib/usuarios/AccionesUsuario.svelte
 
   import { CheckmarkOutline, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
-  import { getFunctions, httpsCallable } from 'firebase/functions';
-  import { app } from '$lib/client';
+  import { httpsCallable } from 'firebase/functions'; // Solo necesitas httpsCallable
+  import { functions } from '$lib/client'; // Importas la instancia ya configurada
   
-
-   export let usuario: {
-    uid: string;
-    isBlocked: boolean;
-  } | undefined = undefined;;
-
-   // Props de Callback  El padre pasará una función para ejecutar cuando el usuario sea eliminado.
+  // --- 2. PROPS Y ESTADO (sin cambios) ---
+  export let usuario: { uid: string; isBlocked: boolean; } | undefined = undefined;
   export let onUserDeleted: (uid: string) => void;
   export let onToggleBlock: (uid: string) => void;
 
-  // Estado local del componente
   let isDeleting = false;
   let isBlocking = false;
   let errorMessage = '';
 
-   // --- 3. LÓGICA DE ELIMINACIÓN ---
+  // --- 3. LÓGICA DE ELIMINACIÓN (SIMPLIFICADA) ---
   async function handleEliminar() {
-    // Añadimos una guarda aquí también, por si acaso
     if (!usuario) return;
 
     isDeleting = true;
     errorMessage = '';
 
     try {
-      const functions = getFunctions(app, 'us-west4');
+      // --- ¡CORRECCIÓN CLAVE! ---
+      // Llama a httpsCallable directamente con la instancia 'functions' que importaste.
+      // Ya no hay que crear una nueva variable.
       const deleteUserCallable = httpsCallable(functions, 'deleteUser');
       
       await deleteUserCallable({ uid: usuario.uid });
@@ -43,12 +38,11 @@
     }
   }
 
- // --- 4. LÓGICA DE BLOQUEO ---
+  // --- 4. LÓGICA DE BLOQUEO (sin cambios) ---
   function handleBloquearDesbloquear() {
     if (!usuario) return;
     onToggleBlock(usuario.uid);
   }
-
 
 </script>
 

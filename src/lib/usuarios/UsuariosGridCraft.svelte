@@ -2,7 +2,7 @@
     // componente src/lib/usuarios/UsuariosGridCraft.svelte
   import { collection, onSnapshot, doc, updateDoc, deleteDoc} from "firebase/firestore";
   import { getAuth} from "firebase/auth";
-  import { dbUsers } from "$lib/client";
+  import { db } from "$lib/client";
   import { Grid, GridFooter, type PagingData, type GridColumn, type GridFilter } from '@mediakular/gridcraft'; 
   import UsuarioEmail from "$lib/usuarios/UsuarioEmail.svelte";
   import AccionesUsuario from "$lib/usuarios/AccionesUsuario.svelte";
@@ -10,7 +10,7 @@
   import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
   import { BarLoader } from "svelte-loading-spinners";
 
-  const usersFirebase = collection(dbUsers, "users");
+  const usersFirebase = collection(db, "users");
   const auth = getAuth();
 
   let usuarios: Usuario[] = [];
@@ -34,7 +34,7 @@ onSnapshot(usersFirebase, (querySnapshot) => {
 });
 
   const bloquearDesbloquearUsuario = async (usuario: Usuario) => {
-      await updateDoc(doc(dbUsers, "users", usuario.uid), {
+      await updateDoc(doc(db, "users", usuario.uid), {
           isBlocked: !usuario.isBlocked,
       });
   };
@@ -76,6 +76,7 @@ const handleUserDeleted = (uid: string) => {
       })
     },
   ];
+
 
 
   let paging = {

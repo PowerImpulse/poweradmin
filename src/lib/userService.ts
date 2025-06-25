@@ -1,9 +1,9 @@
 import { collection, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { dbUsers } from "$lib/client";
+import { db } from "$lib/client";
 import type { Usuario } from '$lib/types';
 
-const usersFirebase = collection(dbUsers, "users");
+const usersFirebase = collection(db, "users");
 const auth = getAuth();
 
 export const crearUsuario = async (email: string, username: string, role: string, password: string) => {
@@ -28,7 +28,7 @@ export const crearUsuario = async (email: string, username: string, role: string
 
 export const bloquearUsuario = async (usuario: Usuario) => {
     try {
-        await updateDoc(doc(dbUsers, "users", usuario.uid), {
+        await updateDoc(doc(db, "users", usuario.uid), {
             isBlocked: !usuario.isBlocked,
         });
     } catch (e: any) {
@@ -38,7 +38,7 @@ export const bloquearUsuario = async (usuario: Usuario) => {
 
 export const eliminarUsuario = async (uid: string) => {
     try {
-        await deleteDoc(doc(dbUsers, "users", uid));
+        await deleteDoc(doc(db, "users", uid));
 
         const user = auth.currentUser;
         if (user && user.uid === uid) {

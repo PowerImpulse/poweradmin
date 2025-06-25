@@ -1,36 +1,20 @@
 <script lang="ts">
-  import {
-    collection,
-    onSnapshot,
-    getDocs,
-    Timestamp,
-    where,
-    query,
-    Query,
-    orderBy,
-  } from "firebase/firestore";
-  import { dbTimeRecord, dbUsers } from "$lib/client";
+  import { collection,onSnapshot,getDocs,Timestamp,where,query,Query,orderBy,} from "firebase/firestore";
+  import { db } from "$lib/client";
   import { BarLoader } from "svelte-loading-spinners";
-  import {
-    Grid,
-    GridFooter,
-    type PagingData,
-    type GridColumn,
-    type GridFilter,
-  } from "@mediakular/gridcraft";
+  import {Grid, GridFooter, type PagingData, type GridColumn,type GridFilter,} from "@mediakular/gridcraft";
   import AsistenciaInfoEntrada from "$lib/asistencias/AsistenciaInfoEntrada.svelte";
   import AsistenciaInfoSalida from "$lib/asistencias/AsistenciaInfoSalida.svelte";
-  import type {  Asistencia } from "$lib/types";
+  import type { Asistencia } from "$lib/types";
   import { exportToCSV } from "$lib/helpers/exportToCSV";
   import { exportToExcel } from "$lib/helpers/exportToExcel";
-
 
   let asistenciasConNombre: Asistencia[] = [];
   let selectedRows: Asistencia[] = [];
   let loading = true;
   let errorMessage = "";
 
-  const usuariosRef = collection(dbUsers, "users");
+  const usuariosRef = collection(db, "users");
 
   let startDate: string = "";
   let endDate: string = "";
@@ -52,7 +36,7 @@
     });
 
   const cargarAsistencias = () => {
-    let asistenciasQuery: Query = collection(dbTimeRecord, "time_record");
+    let asistenciasQuery: Query = collection(db, "time_record");
 
     if (startDate || endDate) {
       const startTimestamp = startDate
@@ -67,7 +51,11 @@
         filtros.push(where("startTime", ">=", startTimestamp));
       if (endTimestamp) filtros.push(where("startTime", "<=", endTimestamp));
 
-      asistenciasQuery = query(asistenciasQuery, ...filtros, orderBy("startTime", "desc"));
+      asistenciasQuery = query(
+        asistenciasQuery,
+        ...filtros,
+        orderBy("startTime", "desc")
+      );
     } else {
       asistenciasQuery = query(asistenciasQuery, orderBy("startTime", "desc"));
     }
@@ -183,13 +171,13 @@
   <BarLoader />
 {:else}
   <div class="bg-slate-2 shadow-md p-4 mb-4 border border-gray-300">
-    <h2 class="text-lg font-semibold mb-3 text-gray-800">
-      Filtros
-    </h2>
+    <h2 class="text-lg font-semibold mb-3 text-gray-800">Filtros</h2>
 
     <div class="grid grid-cols-1 lg:grid-cols-2">
       <div class="flex flex-col w-full pr-4">
-        <label for="buscar" class="text-sm font-medium text-gray-700 mb-1">Buscar</label>
+        <label for="buscar" class="text-sm font-medium text-gray-700 mb-1"
+          >Buscar</label
+        >
         <input
           id="buscar"
           type="text"
@@ -203,11 +191,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 mt-4">
       <div class="grid grid-cols-2 gap-4 w-full pr-4">
         <div class="flex flex-col">
-          <label for="fechainicio" class="text-sm font-medium text-gray-700 mb-1"
+          <label
+            for="fechainicio"
+            class="text-sm font-medium text-gray-700 mb-1"
             >Fecha de Inicio</label
           >
           <input
-          id="fechainicio"
+            id="fechainicio"
             type="date"
             class="border border-gray-400 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full"
             bind:value={startDate}
@@ -219,7 +209,7 @@
             >Fecha de Fin</label
           >
           <input
-          id="fechafin"
+            id="fechafin"
             type="date"
             class="border border-gray-400 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full"
             bind:value={endDate}
@@ -250,7 +240,7 @@
 
   <Grid
     data={asistenciasConNombre}
-    bind:paging={paging}
+    bind:paging
     bind:selectedRows
     columns={[
       { key: "description", title: "Descripción" },
@@ -267,7 +257,7 @@
       {
         key: "infoSalida",
         title: "Ubicación Salida",
-         //@ts-ignore
+        //@ts-ignore
         renderComponent: AsistenciaInfoSalida,
         accessor: (row) => ({
           endImageUrl: row.endImageUrl,

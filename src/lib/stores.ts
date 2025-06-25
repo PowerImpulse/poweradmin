@@ -1,5 +1,5 @@
 import { writable, readable } from 'svelte/store';
-import { auth, dbUsers } from '$lib/client';
+import { auth, db } from '$lib/client';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -57,7 +57,7 @@ onAuthStateChanged(auth, async (authUser) => {
 
   if (authUser) {
     try {
-      const ref = doc(dbUsers, 'users', authUser.uid);
+      const ref = doc(db, 'users', authUser.uid);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const data = snap.data();

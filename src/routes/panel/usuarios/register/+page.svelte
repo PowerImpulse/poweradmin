@@ -195,9 +195,10 @@
 					<label>
 						Asignar Rol
 						<select bind:value={role} required>
-							<option value="superadmin">Empleado</option>
 							<option value="tecnico" selected>Técnico</option>
-							<option value="admin">Gerente</option>
+							<option value="contratista">Contratista</option>
+							<option value="gerente">Gerente</option>
+							<option value="empleado">Empleado</option>
 						</select>
 					</label>
 				</div>

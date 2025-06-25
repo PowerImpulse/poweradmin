@@ -1,10 +1,10 @@
 <script lang="ts">
     import { collection, addDoc } from "firebase/firestore";
     import { getAuth, createUserWithEmailAndPassword} from "firebase/auth"; 
-    import { dbUsers } from "$lib/client"; 
+    import { db } from "$lib/client"; 
     import SectionName from "$lib/components/ui/SectionName.svelte";
 
-    const usersFb = collection(dbUsers, "users");
+    const usersFb = collection(db, "users");
     const auth = getAuth(); // Inicializar Firebase Auth
 
     let email = "Jhon@me.com";

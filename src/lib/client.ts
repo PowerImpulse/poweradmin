@@ -2,6 +2,7 @@
 import { initializeApp,  type FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
+import { getFunctions, type Functions } from "firebase/functions"; 
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,12 +15,11 @@ const firebaseConfig = {
 
 const app: FirebaseApp = initializeApp(firebaseConfig); 
 const auth = getAuth(app);
-const dbUsers = getFirestore(app);
-const dbTareas = getFirestore(app);
-const dbEquipos = getFirestore(app);
-const dbTimeRecord = getFirestore(app);
+const db = getFirestore(app);
 
-export { app, dbUsers, dbEquipos, dbTimeRecord, auth, dbTareas };
+const functions: Functions = getFunctions(app, 'us-west4');
+
+export { app, db, auth, functions };
 
 
 

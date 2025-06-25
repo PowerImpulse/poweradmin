@@ -4,7 +4,7 @@
     import type { DatosUsuario } from '$lib/types';
     import { Edit, DocumentPdf, Image, Save, Close } from 'carbon-icons-svelte';
     import { doc, updateDoc, deleteField } from 'firebase/firestore';
-    import { dbUsers } from '$lib/client';
+    import { db } from '$lib/client';
     import { BarLoader } from "svelte-loading-spinners";
     import SectionName from '$lib/components/ui/SectionName.svelte';
   
@@ -74,7 +74,7 @@
         saveMessage = '';
         saveMessageType = '';
   
-        const userDocRef = doc(dbUsers, 'users', usuario.uid);
+        const userDocRef = doc(db, 'users', usuario.uid);
   
         const diasLaborablesParaGuardar = editableDiasLaborables
             .map(d => d.trim())
@@ -169,7 +169,7 @@
 
   function eliminarDocumento(fileKey: string): Promise<void> {
 
-    const userDocRef = doc(dbUsers, 'users', usuario.uid);
+    const userDocRef = doc(db, 'users', usuario.uid);
 
     const dataToUpdate = {
         [`documents.${fileKey}`]: deleteField()

@@ -1,14 +1,12 @@
 <script lang="ts">
-    import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
+    import { collection, addDoc } from "firebase/firestore";
     import { getAuth, createUserWithEmailAndPassword} from "firebase/auth";
     import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
-    import { dbUsers } from "$lib/client";
+    import { db } from "$lib/client";
     import type { Usuario } from '$lib/types' // TIPOS TS
     import Modal from "$lib/components/ui/Modal.svelte";
  
-  
-  
-    const usersFirebase = collection(dbUsers, "users");
+    const usersFirebase = collection(db, "users");
     const auth = getAuth();
   
     let usuarios: Usuario[] = [];
@@ -16,12 +14,9 @@
     let loading = true;
     let email = "Juan1@me.com";
     let username = "Juan1 Me";
-    let role = "Técnico";
+    let role = "admin";
     let password = "UnjsdK44@";
     let error = "";
-  
-  
-
   
     const crearUsuario = async () => {
         if (email.trim() !== "" && username.trim() !== "" && role.trim() !== "" && password.trim() !== "") {
@@ -50,21 +45,14 @@
         role = "";
         password = "";
     };
- 
-  
-  // Crear usuario al presionar ENTER
+
     const teclaPresionada = (e: KeyboardEvent) => {
         if (e.key === "Enter") {
             crearUsuario();
         }
     };
-  
-  
- 
+
     let showModal = false;
-  
-  
-   
   </script>
   
   <button class=" rounded-full flex ic gap-4 " on:click={() => (showModal = true)}> Nuevo Usuario<AddLarge size={32} /> </button> 

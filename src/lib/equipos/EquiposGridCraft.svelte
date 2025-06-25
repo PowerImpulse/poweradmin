@@ -1,12 +1,12 @@
 <script lang="ts">
     import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
-    import { dbEquipos } from "$lib/client";
+    import { db } from "$lib/client";
     import { Grid, GridFooter, type PagingData, type GridColumn,  type GridFilter } from '@mediakular/gridcraft'; 
     import Modal from "$lib/components/ui/Modal.svelte";
     import AddLarge from "carbon-icons-svelte/lib/AddLarge.svelte";
     import type { Equipo } from '$lib/types'
   
-    const equiposCollection = collection(dbEquipos, "equipos");
+    const equiposCollection = collection(db, "equipos");
     
     let equipos: Equipo[];
     let loading = true;
@@ -24,7 +24,7 @@
     let inactivo = false;
   
     onSnapshot(equiposCollection, (querySnapshot) => {
-
+// @ts-ignore
         equipos = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
