@@ -1,6 +1,6 @@
 // src/routes/panel/usuarios/usuario/[uid]/+page.ts
 import { doc, getDoc } from 'firebase/firestore';
-import { dbUsers } from '$lib/client'; // Asegúrate que la ruta sea correcta
+import { db } from '$lib/client'; // Asegúrate que la ruta sea correcta
 import type { PageLoad } from './$types';
 import type { DatosUsuario } from '$lib/types'; // Importa el tipo completo
 import { error } from '@sveltejs/kit'; // Para manejar errores
@@ -13,7 +13,7 @@ export const load: PageLoad = async ({ params }) => {
     }
 
     try {
-        const userDocRef = doc(dbUsers, 'users', uid);
+        const userDocRef = doc(db, 'users', uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {

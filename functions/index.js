@@ -95,6 +95,7 @@ exports.enviarResumenSegundaQuincena = onSchedule(
 exports.deleteUser = onCall(userManagement.deleteUser);
 exports.setUserRole = onCall(userManagement.setUserRole);
 exports.makeMeSuperAdmin = onRequest(userManagement.makeMeSuperAdmin);
+exports.createUser = onCall(userManagement.createUser);
 
 
 // --- FUNCIONES DE PRUEBA ---

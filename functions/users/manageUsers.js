@@ -47,34 +47,45 @@ const deleteUser = async (data, context) => {
 };
 
 const setUserRole = async (data, context) => {
-  // Verificación de permisos
-  if (context.auth.token.role !== "admin" && context.auth.token.role !== "superadmin") {
+  // --- LOGS DE DEPURACIÓN ---
+  functions.logger.info("--- DEBUGGING setUserRole ---");
+  functions.logger.info("Datos recibidos (data):", data); // Debería mostrar { uid: '...', role: '...' }
+  functions.logger.info("Contexto del llamador (context.auth):", context.auth);
+
+  // Verificación de permisos más segura
+  const callingUserRole = context.auth?.token?.role;
+  if (callingUserRole !== "admin" && callingUserRole !== "superadmin") {
+    functions.logger.error("PERMISO DENEGADO en setUserRole. Rol del llamador:", callingUserRole);
     throw new functions.https.HttpsError(
       "permission-denied",
       "Solo los administradores pueden asignar roles.",
     );
   }
 
+  functions.logger.info(`Permiso CONCEDIDO. Admin "${callingUserRole}" está asignando rol.`);
+
   const { uid, role } = data;
-  const validRoles = ["admin", "superadmin", "gerente", "tecnico"]; // Lista de roles válidos
+  const validRoles = ["admin", "superadmin", "gerente", "tecnico", "empleado", "visor"]; // Asegúrate que todos tus roles estén aquí
 
   if (!uid || !role || !validRoles.includes(role)) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "Se requiere un \"uid\" y un \"role\" válido.",
+      `Se requiere un "uid" y un "role" válido. Recibido: uid=${uid}, role=${role}`,
     );
   }
 
   try {
-    // Asignar el Custom Claim al usuario
+    // Asignar el Custom Claim
     await admin.auth().setCustomUserClaims(uid, { role: role });
+    functions.logger.info(`Custom Claim { role: '${role}' } asignado a UID: ${uid}`);
 
-    // También actualizamos el rol en el documento de Firestore para consistencia
+    // También actualizamos el rol en el documento de Firestore
     await admin.firestore().collection("users").doc(uid).update({ role: role });
+    functions.logger.info(`Documento de Firestore actualizado para UID: ${uid} con role: '${role}'`);
 
     return { success: true, message: `Rol "${role}" asignado a ${uid}.` };
   } catch (error) {
-    functions.logger.error(`Error setting role for user ${uid}:`, error);
+    functions.logger.error(`Error final al asignar rol para user ${uid}:`, error);
     throw new functions.https.HttpsError("internal", "Ocurrió un error al asignar el rol.");
   }
 };
@@ -103,7 +114,51 @@ const makeMeSuperAdmin = async (req, res) => {
   }
 };
 
-module.exports = {
-  deleteUser, setUserRole, makeMeSuperAdmin,
+const createUser = async (data, context) => {
+  // Verificación de permisos: solo un admin puede crear usuarios
+  const callingUserRole = context.auth?.token?.role;
+  if (callingUserRole !== "admin" && callingUserRole !== "superadmin") {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Solo los administradores pueden crear nuevos usuarios.",
+    );
+  }
+
+  const { email, password, username } = data;
+
+  if (!email || !password || !username) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Se requiere email, password y username.",
+    );
+  }
+
+  try {
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+      displayName: username,
+      // Se puede añadir emailVerified: false, disabled: false, etc.
+    });
+
+    functions.logger.info(`Admin ${context.auth.uid} creó nuevo usuario: ${userRecord.uid}`);
+    return { uid: userRecord.uid };
+  } catch (error) {
+    functions.logger.error("Error al crear usuario desde Cloud Function:", error);
+    // Traducir errores comunes
+    if (error.code === "auth/email-already-exists") {
+      throw new functions.https.HttpsError("already-exists", "El correo electrónico ya está en uso por otro usuario.");
+    }
+    throw new functions.https.HttpsError("internal", "Ocurrió un error al crear el usuario en Authentication.");
+  }
 };
+
+// ¡Actualiza tus exports!
+module.exports = {
+  deleteUser,
+  setUserRole,
+  makeMeSuperAdmin,
+  createUser, // <-- Añade la nueva función
+};
+
 

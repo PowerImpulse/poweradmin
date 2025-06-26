@@ -1,11 +1,12 @@
+// src/lib/stores/userStore.ts
 import { writable } from 'svelte/store';
-import { auth } from '$lib/client'; // Importa tu instancia de auth
+import { auth } from '$lib/client';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 
 interface CurrentUserData {
   user: User | null;
   loading: boolean;
-  role?: string; // Aquí guardaremos el rol
+  role?: string;
 }
 
 function createUserStore() {
@@ -13,13 +14,18 @@ function createUserStore() {
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // Si el usuario inicia sesión, obtenemos su token de ID para leer los claims
+      console.log("USERSTORE: Usuario detectado. Forzando refresco del token...");
       const tokenResult = await user.getIdTokenResult(true); // true fuerza el refresco
-      const role = tokenResult.claims.role as string; // Leemos el rol del token
+      
+      // --- ¡LÍNEA DE DEPURACIÓN CLAVE! ---
+      console.log("USERSTORE: Contenido completo de los claims del token:", tokenResult.claims);
+      // ------------------------------------
+
+      const role = tokenResult.claims.role as string;
 
       set({ user, loading: false, role });
     } else {
-      // Si el usuario cierra sesión
+      console.log("USERSTORE: No hay usuario. Sesión cerrada.");
       set({ user: null, loading: false, role: undefined });
     }
   });
