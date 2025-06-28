@@ -10,7 +10,7 @@ const { HttpsError } = require("firebase-functions/v2/https");
 const { Timestamp } = require("firebase-admin/firestore");
 
 // Importar el módulo de gestión de usuarios
-// const userManagement = require("./users/manageUsers");
+const userManagement = require("./users/manageUsers");
 
 admin.initializeApp();
 
@@ -176,6 +176,7 @@ exports.createUser = onCall(async (data, context) => {
     throw new HttpsError("internal", error.message);
   }
 } );
+exports.makeUserSuperAdmin = onCall(userManagement.makeUserSuperAdmin);
 // exports.deleteUser = onCall(userManagement.deleteUser);
 
 // Esta ya estaba bien en v2

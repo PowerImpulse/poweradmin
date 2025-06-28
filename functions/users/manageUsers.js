@@ -132,6 +132,41 @@ const makeMeSuperAdmin = async (req, res) => {
   }
 };
 
+const makeUserSuperAdmin = async (data, context) => {
+  functions.logger.info("--- INICIO de makeUserSuperAdmin (onCall) ---");
+  functions.logger.info("Contexto del llamador:", context.auth);
+
+  // Verificamos que quien llama es, de hecho, un superadmin ya existente
+  if (context.auth?.token?.role !== 'superadmin') {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Solo un superadmin puede asignar este rol.'
+    );
+  }
+  
+  const uidToPromote = data.uid;
+  if (!uidToPromote) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Se requiere un "uid" para promover a superadmin.'
+    );
+  }
+
+  try {
+    await admin.auth().setCustomUserClaims(uidToPromote, { role: 'superadmin' });
+    await admin.firestore().collection('users').doc(uidToPromote).set({ role: 'superadmin' }, { merge: true });
+
+    const message = `Éxito: El usuario ${uidToPromote} ahora es superadmin.`;
+    functions.logger.info(message);
+    return { success: true, message };
+
+  } catch (error) {
+    functions.logger.error(`Error al hacer superadmin a ${uidToPromote}:`, error);
+    throw new functions.https.HttpsError('internal', `Error al promover a superadmin: ${error.message}`);
+  }
+};
+
+
 const createUser = async (data, context) => {
   logger.info("--- INICIO DE createUser (VERSIÓN CON ROLES) ---");
   logger.info("Datos recibidos:", data);
@@ -210,6 +245,7 @@ module.exports = {
   deleteUser,
   setUserRole,
   makeMeSuperAdmin,
+   makeUserSuperAdmin, 
   createUser, // <-- Añade la nueva función
 };
 
