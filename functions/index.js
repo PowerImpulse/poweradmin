@@ -104,6 +104,36 @@ exports.holaMundo = onCall(request => {
   };
 });
 
+exports.makeAdminTest = onCall({ region: "us-west4" }, async request => {
+  logger.info("--- INICIO de makeAdminTest (v2) ---");
+
+  const uidToPromote = request.data.uid;
+
+  if (!uidToPromote) {
+    logger.error("Error: No se proporcionó un UID en la solicitud.");
+    throw new Error("Se requiere un 'uid' para promover a superadmin.");
+  }
+
+  logger.info(`Intentando promover a superadmin al UID: ${uidToPromote}`);
+
+  try {
+    // 1. Asignar el Custom Claim
+    await admin.auth().setCustomUserClaims(uidToPromote, { role: "superadmin" });
+    logger.info(`Custom Claim { role: 'superadmin' } asignado a ${uidToPromote}.`);
+
+    // 2. Crear o actualizar el documento en Firestore
+    const userDocRef = admin.firestore().collection("users").doc(uidToPromote);
+    await userDocRef.set({ role: "superadmin" }, { merge: true });
+    logger.info(`Documento en Firestore actualizado para ${uidToPromote}.`);
+
+    const message = `Éxito: El usuario ${uidToPromote} ahora es superadmin. Cierra y vuelve a iniciar sesión.`;
+    return { success: true, message: message };
+  } catch (error) {
+    logger.error(`Error al hacer superadmin a ${uidToPromote}:`, error);
+    throw new Error(`Error al promover a superadmin: ${error.message}`);
+  }
+});
+
 // --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
 exports.createUser = onCall(async (data, context) => {
   logger.info("--- INICIO DE createUser (VERSIÓN CON ROLES) ---");
@@ -176,8 +206,8 @@ exports.createUser = onCall(async (data, context) => {
     throw new HttpsError("internal", error.message);
   }
 } );
-exports.makeUserSuperAdmin = onCall(userManagement.makeUserSuperAdmin);
-// exports.deleteUser = onCall(userManagement.deleteUser);
+
+exports.deleteUser = onCall(userManagement.deleteUser);
 
 // Esta ya estaba bien en v2
 // exports.setUserRole = onCall(userManagement.setUserRole);
