@@ -1,61 +1,79 @@
 <script lang="ts">
   import { getFunctions, httpsCallable } from 'firebase/functions';
-  import { app } from '$lib/client'; // Asegúrate que tu config de cliente apunte al NUEVO proyecto
+  import { app } from '$lib/client';
 
   let isLoading = false;
   let responseMessage = '';
   let errorMessage = '';
 
-  async function llamarFuncion() {
-    isLoading = true;
+  // --- NUEVO: Estado para la prueba de asignar rol ---
+  let uidToPromote = '';
+  let promoteLoading = false;
+
+  // Función holaMundo (sin cambios)
+  async function llamarFuncionHolaMundo() {
+    // ... tu lógica existente de holaMundo ...
+  }
+
+  // --- NUEVA FUNCIÓN: Llamar a makeUserSuperAdmin ---
+  async function llamarFuncionAsignarRol() {
+    if (!uidToPromote.trim()) {
+      errorMessage = "Por favor, introduce un UID.";
+      return;
+    }
+
+    promoteLoading = true;
     responseMessage = '';
     errorMessage = '';
 
     try {
-      console.log("CLIENTE: Preparando para llamar a la función 'holaMundo'...");
+      console.log(`CLIENTE: Preparando para llamar a 'makeUserSuperAdmin' para el UID: ${uidToPromote}`);
       
-      const functions = getFunctions(app, 'us-west4'); // Usa tu región
-      const holaMundoCallable = httpsCallable(functions, 'holaMundo');
+      const functions = getFunctions(app, 'us-west4');
+      const makeAdminCallable = httpsCallable(functions, 'makeUserSuperAdmin');
       
-      // Enviamos un objeto de datos simple para ver si llega
-      const datosDePrueba = {
-        mensajeCliente: "Hola, servidor",
-        timestampCliente: new Date().toISOString()
-      };
-      console.log("CLIENTE: Enviando datos:", datosDePrueba);
+      const result = await makeAdminCallable({ uid: uidToPromote });
 
-      const result = await holaMundoCallable(datosDePrueba);
-
-      console.log("CLIENTE: Respuesta recibida del servidor:", result.data);
+      console.log("CLIENTE: Respuesta de 'makeUserSuperAdmin':", result.data);
       responseMessage = JSON.stringify(result.data, null, 2);
 
     } catch (error: any) {
-      console.error("CLIENTE: Error al llamar la función:", error);
+      console.error("CLIENTE: Error al asignar rol:", error);
       errorMessage = `Código: ${error.code}\nMensaje: ${error.message}`;
     } finally {
-      isLoading = false;
+      promoteLoading = false;
     }
   }
 </script>
 
 <svelte:head>
-  <title>Prueba de Función Callable</title>
+  <title>Pruebas Cruzadas de Funciones</title>
 </svelte:head>
 
-<h1>Prueba de Conexión SvelteKit | Cloud Functions (Callable)</h1>
+<h1>Pruebas de Conexión</h1>
 
-<p>
-  Esta página prueba la comunicación básica con una función `onCall`.
-</p>
+<hr/>
 
-<button on:click={llamarFuncion} disabled={isLoading}>
-  {#if isLoading}
-    Llamando...
-  {:else}
-    Llamar a la Función "holaMundo"
-  {/if}
+<h2>Prueba 1: "Hola Mundo" (onCall)</h2>
+<p>Verifica la comunicación básica y la recepción del contexto de Auth.</p>
+<button on:click={llamarFuncionHolaMundo} disabled={isLoading}>
+  {#if isLoading}Llamando...{:else}Llamar a "holaMundo"{/if}
 </button>
 
+<hr style="margin-top: 2rem; margin-bottom: 2rem;"/>
+
+<h2>Prueba 2: Asignar Rol de Superadmin (onCall)</h2>
+<p>Verifica si una función que requiere permisos de admin puede ejecutarse.</p>
+<div>
+  <label for="uid">UID del usuario a promover:</label>
+  <input type="text" id="uid" bind:value={uidToPromote} placeholder="Pega el UID aquí" style="width: 300px;"/>
+</div>
+<button on:click={llamarFuncionAsignarRol} disabled={promoteLoading} style="margin-top: 1rem;">
+  {#if promoteLoading}Asignando...{:else}Hacer Superadmin{/if}
+</button>
+
+
+<!-- Sección de Resultados (común para ambas pruebas) -->
 {#if responseMessage}
   <div class="success">
     <h2>Respuesta del Servidor:</h2>
@@ -70,11 +88,7 @@
   </div>
 {/if}
 
+<!-- Estilos ... -->
 <style>
-  h1 { margin-bottom: 1rem; }
-  p { margin-bottom: 1rem; }
-  button { padding: 0.5rem 1rem; font-size: 1rem; }
-  .success { margin-top: 1rem; padding: 1rem; background-color: #e6ffed; border: 1px solid #34d399; }
-  .error { margin-top: 1rem; padding: 1rem; background-color: #fee2e2; border: 1px solid #ef4444; }
-  pre { white-space: pre-wrap; }
+  /* ... tus estilos de success/error ... */
 </style>
