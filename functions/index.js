@@ -1,19 +1,19 @@
 // functions/index.js
-
-const { onSchedule } = require("firebase-functions/v2/scheduler");
-
-const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
-const { Timestamp } = require("firebase-admin/firestore");
 const logger = require("firebase-functions/logger");
+const { setGlobalOptions } = require("firebase-functions/v2");
+// const { onCall, onRequest } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { HttpsError } = require("firebase-functions/v2/https");
+
+const { Timestamp } = require("firebase-admin/firestore");
 
 // Importar el módulo de gestión de usuarios
-const { onCall, onRequest } = require("firebase-functions/v2/https");
-const userManagement = require("./users/manageUsers");
+// const userManagement = require("./users/manageUsers");
 
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
+admin.initializeApp();
+
 const db = admin.firestore();
 
 const APP_EXECUTION_TIME_ZONE = "America/Mexico_City";
@@ -28,11 +28,7 @@ setGlobalOptions({
 const enviarAsistenciasModule = require("./mails/enviarAsistencias");
 const pdfGeneratorModule = require("./mails/generarPdfKit");
 
-const servicioDeps = {
-  db,
-  Timestamp,
-  logger,
-  generarPdfConPdfKit: pdfGeneratorModule.generarPdfConPdfKit,
+const servicioDeps = { db, Timestamp, logger, generarPdfConPdfKit: pdfGeneratorModule.generarPdfConPdfKit,
   TIME_ZONE: REPORT_DATA_TIME_ZONE,
 };
 
@@ -91,12 +87,100 @@ exports.enviarResumenSegundaQuincena = onSchedule(
     }
   });
 
-// --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
-exports.deleteUser = onCall(userManagement.deleteUser);
-exports.setUserRole = onCall(userManagement.setUserRole);
-exports.makeMeSuperAdmin = onRequest(userManagement.makeMeSuperAdmin);
-exports.createUser = onCall(userManagement.createUser);
+exports.holaMundo = onCall(request => {
+  // Log para saber que la función fue llamada
+  logger.info("¡Función 'holaMundo' llamada!");
 
+  // Imprimimos cualquier dato que llegue del cliente
+  logger.info("Datos recibidos:", request.data);
+
+  // Imprimimos el contexto de autenticación para ver si llega
+  logger.info("Contexto de Auth:", request.auth);
+
+  // Retornamos un mensaje de éxito al cliente
+  return {
+    mensaje: "¡Hola desde la Cloud Function!",
+    timestamp: new Date().toISOString(),
+  };
+});
+
+// --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
+exports.createUser = onCall(async (data, context) => {
+  logger.info("--- INICIO DE createUser (VERSIÓN CON ROLES) ---");
+  logger.info("Datos recibidos:", data);
+  logger.info("Tipo de context.auth:", typeof context.auth);
+  logger.info("Valor de context.auth (directo):", context.auth);
+  logger.info("Valor de context (completo):", context);
+  try {
+    logger.info("Valor de context (JSON stringify):", JSON.stringify(context, null, 2));
+  } catch (e) {
+    logger.error("Error al stringify context:", e);
+  }
+
+  if (context.auth) {
+    logger.info("Context.auth está POPULADO.");
+    logger.info("UID del llamador según context.auth:", context.auth.uid);
+    logger.info("Claims del llamador según context.auth:", context.auth.token);
+  } else {
+    logger.error("Context.auth está VACÍO (null/undefined). Esto es inesperado si la verificación pasó.");
+  }
+
+  if (!context.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "Debes estar autenticado para crear usuarios.",
+    );
+  }
+
+  // Si solo quieres que los admins existentes puedan crear nuevos superadmins:
+  const callerUid = context.auth.uid;
+  const callerUserRecord = await admin.auth().getUser(callerUid);
+  const callerCustomClaims = callerUserRecord.customClaims;
+
+  if (!callerCustomClaims || callerCustomClaims.role !== "superadmin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Solo un superadmin puede crear nuevos usuarios con roles elevados.",
+    );
+  }
+  // Fin del PASO 1
+
+  try {
+    const { email, password, username, role } = data; // Asegúrate de que `role` se envíe desde SvelteKit
+    if (!email || !password || !username || !role) {
+      throw new Error("Faltan datos (email, password, username, o role).");
+    }
+
+    // Crea el usuario
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName: username,
+    });
+
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
+
+
+    logger.info(`¡ÉXITO en createUser! UID: ${userRecord.uid}, Rol: ${role}`);
+    return { success: true, uid: userRecord.uid, role: role };
+  } catch (error) {
+    logger.error("ERROR en createUser:", error);
+    // Para errores específicos de Firebase Auth, puedes mapearlos a HttpsError
+    if (error.code === "auth/email-already-in-use") {
+      throw new HttpsError("already-exists", "El email ya está en uso.");
+    } else if (error.code === "auth/invalid-password") {
+      throw new HttpsError("invalid-argument", "La contraseña es demasiado débil.");
+    }
+    // Para otros errores, un error interno genérico
+    throw new HttpsError("internal", error.message);
+  }
+} );
+// exports.deleteUser = onCall(userManagement.deleteUser);
+
+// Esta ya estaba bien en v2
+// exports.setUserRole = onCall(userManagement.setUserRole);
+// exports.makeMeSuperAdmin = onRequest(userManagement.makeMeSuperAdmin);
 
 // --- FUNCIONES DE PRUEBA ---
 // const { onRequest } = require("firebase-functions/v2/https");

@@ -1,74 +1,92 @@
 // functions/users/manageUsers.js
 
 const admin = require("firebase-admin");
-const functions = require("firebase-functions");
 
-/** . jsDoc
- * Elimina un usuario de Firebase Authentication y su documento correspondiente en Firestore.
- * Solo los administradores pueden ejecutar esta función.
- * @param {object} data - El objeto de datos enviado desde el cliente. Debe contener `uid`.
- * @param {object} context - El contexto de la función, incluyendo la info de autenticación del llamador.
- * @returns {Promise<{success: boolean, message: string}>}
- */
+const { logger } = require("firebase-functions/v2");
+const { HttpsError } = require("firebase-functions/v2/https");
+
+
 const deleteUser = async (data, context) => {
-  functions.logger.info("--- INICIANDO VERIFICACIÓN DE CONTEXTO ---");
-
-  // 1. Verificar si el objeto 'auth' existe en el contexto
-  if (!context.auth) {
-    functions.logger.error("FALLO CRÍTICO: El objeto 'context.auth' es UNDEFINED. El usuario no está autenticado en la llamada.");
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "La solicitud no contiene credenciales de autenticación.",
-    );
-  }
-
-  // Si 'auth' existe, lo logueamos para verlo
-  functions.logger.info("ÉXITO: El objeto 'context.auth' existe. Contenido:", context.auth);
-
-  // 2. Verificar el rol de forma segura
-  const userRole = context.auth.token?.role;
-
-  if (userRole) {
-    functions.logger.info(`ÉXITO: Se encontró el rol '${userRole}' en el token.`);
-  } else {
-    functions.logger.error("FALLO: El objeto 'context.auth' existe, pero 'context.auth.token.role' no se encontró. Claims:", context.auth.token);
-    throw new functions.https.HttpsError(
+  // Verificar autenticación y privilegios
+  if (!context.auth?.token.superadmin) {
+    throw new HttpsError(
       "permission-denied",
-      "Autenticado, pero sin rol de permisos.",
+      "Se requieren privilegios de superadmin",
     );
   }
 
-  // 3. Si llegamos aquí, todo es correcto. Devolvemos un mensaje de éxito.
-  // Por ahora, no eliminamos al usuario para no complicar la prueba.
-  const successMessage = `Verificación exitosa. El usuario ${context.auth.uid} con rol '${userRole}' tiene permiso.`;
-  functions.logger.info(successMessage);
+  // Obtener documentId del usuario a eliminar
+  const userDocId = data.userDocId;
+  if (!userDocId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Se requiere el ID del documento de usuario",
+    );
+  }
 
-  return { success: true, message: successMessage };
+  try {
+    // Obtener el documento para extraer el UID de autenticación
+    const userDoc = await admin.firestore().collection("users").doc(userDocId).get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError(
+        "not-found",
+        "Usuario no encontrado en Firestore",
+      );
+    }
+
+    const authUid = userDoc.data()?.uid;
+    if (!authUid) {
+      throw new HttpsError(
+        "invalid-argument",
+        "El documento de usuario no contiene un UID válido",
+      );
+    }
+
+    // Eliminar de Authentication
+    await admin.auth().deleteUser(authUid);
+
+    // Eliminar el documento de Firestore
+    await userDoc.ref.delete();
+
+    return {
+      success: true,
+      message: "Usuario eliminado correctamente de Auth y Firestore",
+      deletedAuthUid: authUid,
+      deletedFirestoreDoc: userDocId,
+    };
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      "Error al eliminar usuario",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 };
 
 const setUserRole = async (data, context) => {
   // --- LOGS DE DEPURACIÓN ---
-  functions.logger.info("--- DEBUGGING setUserRole ---");
-  functions.logger.info("Datos recibidos (data):", data); // Debería mostrar { uid: '...', role: '...' }
-  functions.logger.info("Contexto del llamador (context.auth):", context.auth);
+  logger.info("--- DEBUGGING setUserRole ---");
+  logger.info("Datos recibidos (data):", data); // Debería mostrar { uid: '...', role: '...' }
+  logger.info("Context del llamador (context.auth):", context.auth);
 
   // Verificación de permisos más segura
   const callingUserRole = context.auth?.token?.role;
   if (callingUserRole !== "admin" && callingUserRole !== "superadmin") {
-    functions.logger.error("PERMISO DENEGADO en setUserRole. Rol del llamador:", callingUserRole);
-    throw new functions.https.HttpsError(
+    logger.error("PERMISO DENEGADO en setUserRole. Rol del llamador:", callingUserRole);
+    throw new HttpsError(
       "permission-denied",
       "Solo los administradores pueden asignar roles.",
     );
   }
 
-  functions.logger.info(`Permiso CONCEDIDO. Admin "${callingUserRole}" está asignando rol.`);
+  logger.info(`Permiso CONCEDIDO. Admin "${callingUserRole}" está asignando rol.`);
 
   const { uid, role } = data;
   const validRoles = ["admin", "superadmin", "gerente", "tecnico", "empleado", "visor"]; // Asegúrate que todos tus roles estén aquí
 
   if (!uid || !role || !validRoles.includes(role)) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       "invalid-argument",
       `Se requiere un "uid" y un "role" válido. Recibido: uid=${uid}, role=${role}`,
     );
@@ -77,16 +95,16 @@ const setUserRole = async (data, context) => {
   try {
     // Asignar el Custom Claim
     await admin.auth().setCustomUserClaims(uid, { role: role });
-    functions.logger.info(`Custom Claim { role: '${role}' } asignado a UID: ${uid}`);
+    logger.info(`Custom Claim { role: '${role}' } asignado a UID: ${uid}`);
 
     // También actualizamos el rol en el documento de Firestore
     await admin.firestore().collection("users").doc(uid).update({ role: role });
-    functions.logger.info(`Documento de Firestore actualizado para UID: ${uid} con role: '${role}'`);
+    logger.info(`Documento de Firestore actualizado para UID: ${uid} con role: '${role}'`);
 
     return { success: true, message: `Rol "${role}" asignado a ${uid}.` };
   } catch (error) {
-    functions.logger.error(`Error final al asignar rol para user ${uid}:`, error);
-    throw new functions.https.HttpsError("internal", "Ocurrió un error al asignar el rol.");
+    logger.error(`Error final al asignar rol para user ${uid}:`, error);
+    throw new HttpsError("internal", "Ocurrió un error al asignar el rol.");
   }
 };
 
@@ -106,52 +124,86 @@ const makeMeSuperAdmin = async (req, res) => {
     await userDocRef.set({ role: "superadmin" }, { merge: true });
 
     const message = `¡Éxito! El usuario ${myUid} ahora es superadmin. Por favor, cierra sesión y vuelve a iniciar sesión para que el cambio surta efecto.`;
-    functions.logger.info(message);
+    logger.info(message);
     return res.status(200).send(message);
   } catch (error) {
-    functions.logger.error(`Error al hacer superadmin a ${myUid}:`, error);
+    logger.error(`Error al hacer superadmin a ${myUid}:`, error);
     return res.status(500).send(`Error: ${error.message}`);
   }
 };
 
 const createUser = async (data, context) => {
-  // Verificación de permisos: solo un admin puede crear usuarios
-  const callingUserRole = context.auth?.token?.role;
-  if (callingUserRole !== "admin" && callingUserRole !== "superadmin") {
-    throw new functions.https.HttpsError(
+  logger.info("--- INICIO DE createUser (VERSIÓN CON ROLES) ---");
+  logger.info("Datos recibidos:", data);
+  logger.info("Tipo de context.auth:", typeof context.auth);
+  logger.info("Valor de context.auth (directo):", context.auth);
+  logger.info("Valor de context (completo):", context);
+  try {
+    logger.info("Valor de context (JSON stringify):", JSON.stringify(context, null, 2));
+  } catch (e) {
+    logger.error("Error al stringify context:", e);
+  }
+
+  if (context.auth) {
+    logger.info("Context.auth está POPULADO.");
+    logger.info("UID del llamador según context.auth:", context.auth.uid);
+    logger.info("Claims del llamador según context.auth:", context.auth.token);
+  } else {
+    logger.error("Context.auth está VACÍO (null/undefined). Esto es inesperado si la verificación pasó.");
+  }
+
+  if (!context.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "Debes estar autenticado para crear usuarios.",
+    );
+  }
+
+  // Si solo quieres que los admins existentes puedan crear nuevos superadmins:
+  const callerUid = context.auth.uid;
+  const callerUserRecord = await admin.auth().getUser(callerUid);
+  const callerCustomClaims = callerUserRecord.customClaims;
+
+  if (!callerCustomClaims || callerCustomClaims.role !== "superadmin") {
+    throw new HttpsError(
       "permission-denied",
-      "Solo los administradores pueden crear nuevos usuarios.",
+      "Solo un superadmin puede crear nuevos usuarios con roles elevados.",
     );
   }
-
-  const { email, password, username } = data;
-
-  if (!email || !password || !username) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Se requiere email, password y username.",
-    );
-  }
+  // Fin del PASO 1
 
   try {
+    const { email, password, username, role } = data; // Asegúrate de que `role` se envíe desde SvelteKit
+    if (!email || !password || !username || !role) {
+      throw new Error("Faltan datos (email, password, username, o role).");
+    }
+
+    // Crea el usuario
     const userRecord = await admin.auth().createUser({
-      email: email,
-      password: password,
+      email,
+      password,
       displayName: username,
-      // Se puede añadir emailVerified: false, disabled: false, etc.
     });
 
-    functions.logger.info(`Admin ${context.auth.uid} creó nuevo usuario: ${userRecord.uid}`);
-    return { uid: userRecord.uid };
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
+
+
+    logger.info(`¡ÉXITO en createUser! UID: ${userRecord.uid}, Rol: ${role}`);
+    return { success: true, uid: userRecord.uid, role: role };
   } catch (error) {
-    functions.logger.error("Error al crear usuario desde Cloud Function:", error);
-    // Traducir errores comunes
-    if (error.code === "auth/email-already-exists") {
-      throw new functions.https.HttpsError("already-exists", "El correo electrónico ya está en uso por otro usuario.");
+    logger.error("ERROR en createUser:", error);
+    // Para errores específicos de Firebase Auth, puedes mapearlos a HttpsError
+    if (error.code === "auth/email-already-in-use") {
+      throw new HttpsError("already-exists", "El email ya está en uso.");
+    } else if (error.code === "auth/invalid-password") {
+      throw new HttpsError("invalid-argument", "La contraseña es demasiado débil.");
     }
-    throw new functions.https.HttpsError("internal", "Ocurrió un error al crear el usuario en Authentication.");
+    // Para otros errores, un error interno genérico
+    throw new HttpsError("internal", error.message);
   }
 };
+
 
 // ¡Actualiza tus exports!
 module.exports = {

@@ -1,126 +1,102 @@
+<!-- Asegúrate de que este es tu componente de formulario -->
 <script lang="ts">
-  // --- 1. IMPORTACIONES ---
-  import { getFunctions, httpsCallable, type Functions, type HttpsCallable } from 'firebase/functions';
-  import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-  import { app, db } from '$lib/client';
+   // Importa solo 'httpsCallable' del paquete 'firebase/functions'
+  import { httpsCallable } from 'firebase/functions'; 
   
-  // ¡NUEVO! Importamos lo necesario para obtener y refrescar el token del admin
-  import { getAuth } from 'firebase/auth';
+  // ¡Importa directamente 'functions' (y 'app' si aún la necesitas para otras cosas) desde $lib/client!
+  import { functions } from '$lib/client'; // <--- ¡CAMBIO AQUÍ!
 
-  // --- 2. ESTADO DEL FORMULARIO ---
-  let email = '';
-  let password = '';
-  let username = '';
-  let role: 'admin' | 'superadmin' | 'gerente' | 'tecnico' | 'empleado' | 'visor' = 'tecnico';
-  
+  // --- ESTADO DEL FORMULARIO ---
+  let email = 'test@uno.com';
+  let password = '1234abc';
+  let username = 'testuno';
+  let role = 'tecnico'; // Valor por defecto
+
   // Estado de la UI
   let isLoading = false;
-  let successMessage = '';
   let errorMessage = '';
+  let successMessage = '';
 
-  // --- 3. LÓGICA DE REGISTRO (CON REFRESCÓ DE TOKEN Y TIPADO CORRECTO) ---
-  async function handleRegister(): Promise<void> {
+  async function handleRegister() {
     isLoading = true;
-    successMessage = '';
     errorMessage = '';
+    successMessage = '';
 
     try {
-      // --- PASO A: OBTENER Y REFRESCAR EL TOKEN DEL ADMINISTRADOR ---
-      const auth = getAuth(app);
-      const adminUser = auth.currentUser;
+      const dataToSend = {
+        email: email,
+        password: password,
+        username: username,
+        role: role,
+      };
+      
+      console.log("CLIENTE: Datos que se van a enviar:", dataToSend);
 
-      if (!adminUser) {
-        throw new Error("No hay un usuario administrador logueado. Por favor, reinicia la sesión.");
+      if (!dataToSend.email || !dataToSend.password) {
+        throw new Error("Por favor, rellena el email y la contraseña.");
       }
       
-      // Forzamos el refresco del token para asegurar que los claims son los más recientes.
-      await adminUser.getIdToken(true);
-      console.log("Token de administrador refrescado exitosamente antes de las llamadas.");
+      // ¡Ahora usamos la instancia 'functions' que ya importamos y que viene de $lib/client!
+      const createUserCallable = httpsCallable(functions, 'createUser'); // <--- ¡CAMBIO AQUÍ!
+      const result = await createUserCallable(dataToSend);
 
-      // --- PASO B: PREPARAR LAS LLAMADAS A LAS CLOUD FUNCTIONS CON TIPOS ---
-      const functions: Functions = getFunctions(app, 'us-west4');
+      successMessage = `Éxito: ${(result.data as any).message}`;
       
-      // Tipado para la función createUser
-      const createUserCallable: HttpsCallable<{ email: string; password: string; username: string }, { uid: string }> = 
-        httpsCallable(functions, 'createUser');
-      
-      // Tipado para la función setUserRole
-      const setUserRoleCallable: HttpsCallable<{ uid: string; role: string }, { success: boolean }> = 
-        httpsCallable(functions, 'setUserRole');
-
-      // --- PASO 1: Crear usuario en Auth ---
-      const result = await createUserCallable({ email, password, username });
-      const newUid = result.data.uid;
-
-      if (!newUid) {
-        throw new Error("La Cloud Function 'createUser' no retornó un UID.");
-      }
-      successMessage = `Paso 1/3: Usuario creado en Auth con UID: ${newUid}`;
-
-      // --- PASO 2: Crear documento en Firestore ---
-      const userDocRef = doc(db, "users", newUid);
-      await setDoc(userDocRef, {
-        uid: newUid,
-        email,
-        username,
-        role,
-        isBlocked: false,
-        created_at: serverTimestamp(),
-      });
-      successMessage += "\nPaso 2/3: Documento creado en Firestore.";
-      
-      // --- PASO 3: Asignar Custom Claim ---
-      await setUserRoleCallable({ uid: newUid, role: role });
-      successMessage += "\nPaso 3/3: Rol asignado correctamente. ¡Usuario creado con éxito!";
-
     } catch (error: any) {
-      console.error("Error en el proceso de registro:", error);
+      console.error("Error en el formulario:", error);
       errorMessage = `Error: ${error.message}`;
-      successMessage = '';
     } finally {
       isLoading = false;
     }
   }
 </script>
 
-<!-- Tu HTML del formulario no necesita cambios -->
-<form on:submit|preventDefault={handleRegister}>
-  <div>
-    <label for="email">Correo electrónico:</label>
-    <input type="email" id="email" bind:value={email} required />
-  </div>
-  <div>
-    <label for="password">Contraseña:</label>
-    <input type="password" id="password" bind:value={password} required minlength="6" />
-  </div>
-  <div>
-    <label for="username">Nombre de usuario:</label>
-    <input type="text" id="username" bind:value={username} required />
-  </div>
-  <div>
-    <label for="role">Rol:</label>
-    <select id="role" bind:value={role} required>
-      <option value="tecnico">Técnico</option>
-      <option value="empleado">Empleado</option>
-      <option value="visor">Visor</option>
-      <option value="gerente">Gerente</option>
-      <option value="admin">Admin</option>
-      <option value="superadmin">Super Admin</option>
-    </select>
+<div class="w-80 p-10">
+<h3 class="mb-8">Crear Nuevo Usuario (Prueba)</h3>
+<form on:submit|preventDefault={handleRegister} >
+  
+  <div class="form-field">
+    <label for="username">Nombre de Usuario:</label>
+    <!-- ¡VERIFICA ESTE BIND! -->
+    <input type="text" id="username" bind:value={username} required>
   </div>
   
-  <button type="submit" disabled={isLoading}>
+  <div class="form-field">
+    <label for="email">Correo Electrónico:</label>
+    <!-- ¡VERIFICA ESTE BIND! -->
+    <input type="email" id="email" bind:value={email} required>
+  </div>
+
+  <div class="form-field">
+    <label for="password">Contraseña:</label>
+    <!-- ¡VERIFICA ESTE BIND! -->
+    <input type="password" id="password" bind:value={password} required minlength="6">
+  </div>
+
+  <!-- Puedes añadir el selector de rol si quieres, pero no es necesario para esta prueba -->
+  
+  <button type="submit" disabled={isLoading} class="bg-blue-8 text-white p-3" >
     {#if isLoading}
       Creando...
     {:else}
-      Crear Usuario
+      Crear Usuario de Prueba
     {/if}
   </button>
 </form>
 
-{#if successMessage}
-  <pre class="text-green-500">{successMessage}</pre>
-{/if}
 {#if errorMessage}
-  <p class="text-red-500">{errorMessage}</p>
+  <p class="error">{errorMessage}</p>
 {/if}
+{#if successMessage}
+  <p class="success">{successMessage}</p>
+{/if}
+</div>
+
+<style>
+
+  .form-field { margin-bottom: 1rem; }
+  label { display: block; margin-bottom: 0.25rem; }
+  input { width: 100%; padding: 0.5rem; }
+  .error { color: red; }
+  .success { color: green; }
+</style>

@@ -22,6 +22,7 @@ function toggleSubMenu() {
   
   <ul class="block grid gap-4 pt-8 " >
     <li><SideLink route="/panel/" ><span><SailboatCoastal size={16} /></span> INICIO</SideLink></li>
+     <li><SideLink route="/panel/on" ><span><SailboatCoastal size={16} /></span>ON</SideLink></li>
     <li><SideLink route="/panel/asistencias" > <span><WatsonHealthStatusAcknowledge size={16} /></span> ASISTENCIAS</SideLink></li>
     <li>
       <SideLink  route="#" on:click={toggleSubMenu} > <span><AssemblyCluster size={16} /> </span> USUARIOS </SideLink>
