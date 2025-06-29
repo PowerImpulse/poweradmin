@@ -16,29 +16,21 @@
   }
 
   // --- NUEVA FUNCIÓN: Llamar a makeUserSuperAdmin ---
-  async function llamarFuncionAsignarRol() {
+   async function llamarFuncionAsignarRol() {
     if (!uidToPromote.trim()) {
       errorMessage = "Por favor, introduce un UID.";
       return;
     }
-
     promoteLoading = true;
     responseMessage = '';
     errorMessage = '';
-
     try {
-      console.log(`CLIENTE: Preparando para llamar a 'makeUserSuperAdmin' para el UID: ${uidToPromote}`);
-      
       const functions = getFunctions(app, 'us-west4');
-      const makeAdminCallable = httpsCallable(functions, 'makeUserSuperAdmin');
-      
+      // --- CAMBIO: Apunta a la nueva función 'makeAdminTest' ---
+      const makeAdminCallable = httpsCallable(functions, 'makeAdminTest');
       const result = await makeAdminCallable({ uid: uidToPromote });
-
-      console.log("CLIENTE: Respuesta de 'makeUserSuperAdmin':", result.data);
       responseMessage = JSON.stringify(result.data, null, 2);
-
     } catch (error: any) {
-      console.error("CLIENTE: Error al asignar rol:", error);
       errorMessage = `Código: ${error.code}\nMensaje: ${error.message}`;
     } finally {
       promoteLoading = false;
