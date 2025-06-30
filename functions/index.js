@@ -10,7 +10,7 @@ const { HttpsError } = require("firebase-functions/v2/https");
 const { Timestamp } = require("firebase-admin/firestore");
 
 // Importar el módulo de gestión de usuarios
-const userManagement = require("./users/manageUsers");
+// const userManagement = require("./users/manageUsers");
 
 admin.initializeApp();
 
@@ -207,7 +207,39 @@ exports.createUser = onCall(async (data, context) => {
   }
 } );
 
-exports.deleteUser = onCall(userManagement.deleteUser);
+exports.deleteUserTest = onCall({ region: "us-west4" }, async request => {
+  logger.info("--- INICIO de deleteUserTest (v2) ---");
+
+  // 1. Verificación de permisos del llamador
+  const callingUserRole = request.auth?.token?.role;
+  if (callingUserRole !== "superadmin") {
+    logger.error(`FALLO DE PERMISO en deleteUserTest. Rol del llamador: '${callingUserRole}'`);
+    throw new Error("Permiso denegado. Solo un superadmin puede eliminar usuarios.");
+  }
+
+  // 2. Verificación de los datos de entrada
+  const uidToDelete = request.data.uid;
+  if (!uidToDelete) {
+    logger.error("Error: No se proporcionó un UID para eliminar.");
+    throw new Error("Se requiere un 'uid' para eliminar.");
+  }
+
+  logger.info(`PERMISO CONCEDIDO. Superadmin ${request.auth.uid} intentando eliminar al UID: ${uidToDelete}`);
+
+  try {
+    // 3. Lógica principal: Eliminar el usuario de Authentication
+    await admin.auth().deleteUser(uidToDelete);
+
+    const message = `¡Éxito! Usuario ${uidToDelete} eliminado de Firebase Authentication.`;
+    logger.info(message);
+    return { success: true, message: message };
+  } catch (error) {
+    logger.error(`Error al eliminar usuario de Auth ${uidToDelete}:`, error);
+    throw new Error(`Error al eliminar de Auth: ${error.message}`);
+  }
+});
+
+// exports.deleteUser = onCall(userManagement.deleteUser);
 
 // Esta ya estaba bien en v2
 // exports.setUserRole = onCall(userManagement.setUserRole);

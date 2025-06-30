@@ -10,9 +10,40 @@
   let uidToPromote = '';
   let promoteLoading = false;
 
+    let uidToDelete = '';
+  let deleteLoading = false;
+
+
   // Función holaMundo (sin cambios)
   async function llamarFuncionHolaMundo() {
-    // ... tu lógica existente de holaMundo ...
+     isLoading = true;
+    responseMessage = '';
+    errorMessage = '';
+
+    try {
+      console.log("CLIENTE: Preparando para llamar a la función 'holaMundo'...");
+      
+      const functions = getFunctions(app, 'us-west4'); // Usa tu región
+      const holaMundoCallable = httpsCallable(functions, 'holaMundo');
+      
+      // Enviamos un objeto de datos simple para ver si llega
+      const datosDePrueba = {
+        mensajeCliente: "Hola, servidor",
+        timestampCliente: new Date().toISOString()
+      };
+      console.log("CLIENTE: Enviando datos:", datosDePrueba);
+
+      const result = await holaMundoCallable(datosDePrueba);
+
+      console.log("CLIENTE: Respuesta recibida del servidor:", result.data);
+      responseMessage = JSON.stringify(result.data, null, 2);
+
+    } catch (error: any) {
+      console.error("CLIENTE: Error al llamar la función:", error);
+      errorMessage = `Código: ${error.code}\nMensaje: ${error.message}`;
+    } finally {
+      isLoading = false;
+    }
   }
 
   // --- NUEVA FUNCIÓN: Llamar a makeUserSuperAdmin ---
@@ -34,6 +65,39 @@
       errorMessage = `Código: ${error.code}\nMensaje: ${error.message}`;
     } finally {
       promoteLoading = false;
+    }
+  }
+
+    // --- NUEVA FUNCIÓN: Llamar a deleteUserTest ---
+  async function llamarFuncionEliminar() {
+    if (!uidToDelete.trim()) {
+      errorMessage = "Por favor, introduce un UID para eliminar.";
+      return;
+    }
+    if (!confirm(`¿Estás SEGURO de que quieres eliminar al usuario ${uidToDelete} de AUTHENTICATION? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    deleteLoading = true;
+    responseMessage = '';
+    errorMessage = '';
+
+    try {
+      console.log(`CLIENTE: Preparando para llamar a 'deleteUserTest' para el UID: ${uidToDelete}`);
+      
+      const functions = getFunctions(app, 'us-west4');
+      const deleteUserCallable = httpsCallable(functions, 'deleteUserTest');
+      
+      const result = await deleteUserCallable({ uid: uidToDelete });
+
+      console.log("CLIENTE: Respuesta de 'deleteUserTest':", result.data);
+      responseMessage = JSON.stringify(result.data, null, 2);
+
+    } catch (error: any) {
+      console.error("CLIENTE: Error al eliminar usuario:", error);
+      errorMessage = `Código: ${error.code}\nMensaje: ${error.message}`;
+    } finally {
+      deleteLoading = false;
     }
   }
 </script>
@@ -62,6 +126,19 @@
 </div>
 <button on:click={llamarFuncionAsignarRol} disabled={promoteLoading} style="margin-top: 1rem;">
   {#if promoteLoading}Asignando...{:else}Hacer Superadmin{/if}
+</button>
+
+<!-- --- NUEVA SECCIÓN DE PRUEBA --- -->
+<h2>Prueba 3: Eliminar Usuario (Solo de Authentication)</h2>
+<p>
+  Verifica si tu usuario superadmin puede ejecutar una acción destructiva en otro usuario.
+</p>
+<div>
+  <label for="uid-delete">UID del usuario a eliminar de Auth:</label>
+  <input type="text" id="uid-delete" bind:value={uidToDelete} placeholder="Pega el UID aquí" style="width: 300px;"/>
+</div>
+<button on:click={llamarFuncionEliminar} disabled={deleteLoading} style="margin-top: 1rem;">
+  {#if deleteLoading}Eliminando...{:else}Eliminar de Auth{/if}
 </button>
 
 
