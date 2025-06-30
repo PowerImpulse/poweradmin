@@ -8,9 +8,6 @@
   import MenuLateral from "$lib/components/MenuLateral.svelte";
   import Time from '$lib/components/ui/Time.svelte';
   import ButtonLogOut from '$lib/components/ui/ButtonLogOut.svelte';
-  import { currentUser } from '$lib/userStore';
-
-  
 
   let initialLoad = false;
 
@@ -42,9 +39,7 @@ onMount(() => {
     <MenuLateral />
   </Sidebar> 
   <main class="flex-1 h-full ">
-<strong>Sesión activa como:</strong> {$currentUser.user?.email} <br>
-      <strong>Rol (desde token):</strong> <span class="font-bold uppercase">{$currentUser.role || 'Sin Rol'} <br>
-      {$currentUser.user?.uid} </span>
+
     <slot/>
   
   </main>

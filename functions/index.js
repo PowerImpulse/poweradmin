@@ -132,7 +132,8 @@ exports.makeAdminTest = onCall({ region: "us-west4" }, async request => {
   }
 });
 
-// --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
+// --- GESTIÓN DE USUARIOS --- /////////////////
+
 exports.createUser = onCall({ region: "us-west4" }, async request => {
   logger.info("--- INICIO de createUser (Definitiva) ---");
 
@@ -199,6 +200,7 @@ exports.createUser = onCall({ region: "us-west4" }, async request => {
     throw new Error(`Error al crear usuario: ${error.message}`);
   }
 });
+
 
 exports.deleteUserTest = onCall({ region: "us-west4" }, async request => {
   logger.info("--- INICIO de deleteUserTest (v2) ---");
@@ -279,6 +281,7 @@ exports.deleteUser = onCall({ region: "us-west4" }, async request => {
     throw new Error(`Error al eliminar usuario: ${error.message}`);
   }
 });
+
 
 // exports.deleteUser = onCall(userManagement.deleteUser);
 

@@ -16,13 +16,11 @@ function toggleSubMenu() {
 </script>
 
 
-
-
 <nav class="flex flex-col justify-between h-full py-8">
   
   <ul class="block grid gap-4 pt-8 " >
     <li><SideLink route="/panel/" ><span><SailboatCoastal size={16} /></span> INICIO</SideLink></li>
-     <li><SideLink route="/panel/on" ><span><SailboatCoastal size={16} /></span>ON</SideLink></li>
+     <!-- <li><SideLink route="/panel/supadmin" ><span><SailboatCoastal size={16} /></span>ON</SideLink></li> -->
     <li><SideLink route="/panel/asistencias" > <span><WatsonHealthStatusAcknowledge size={16} /></span> ASISTENCIAS</SideLink></li>
     <li>
       <SideLink  route="#" on:click={toggleSubMenu} > <span><AssemblyCluster size={16} /> </span> USUARIOS </SideLink>
@@ -45,8 +43,6 @@ function toggleSubMenu() {
   nav{
     padding:0 4px 10px 12px ;
   }
-
- 
   .submenu {
     display: none;
     padding: 0 0 0 1.4rem;
