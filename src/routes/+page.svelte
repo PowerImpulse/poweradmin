@@ -5,8 +5,8 @@
   import { isLoggedIn, loadingUser } from '$lib/stores';
   import { BarLoader } from "svelte-loading-spinners";
 
-  let email = 'edgar.carmona@powerimpulse.com.mx';
-  let password = 'cdASfo$f$l}2;-za';
+  let email = 'jean@iconmedios.com';
+  let password = 'dXjNqEqD2fN8xWq';
   let errorMessage = '';
 
   const login = async () => {

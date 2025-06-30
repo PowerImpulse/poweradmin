@@ -2,10 +2,8 @@
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
 const { setGlobalOptions } = require("firebase-functions/v2");
-// const { onCall, onRequest } = require("firebase-functions/v2/https");
 const { onCall } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { HttpsError } = require("firebase-functions/v2/https");
 
 const { Timestamp } = require("firebase-admin/firestore");
 
@@ -135,77 +133,72 @@ exports.makeAdminTest = onCall({ region: "us-west4" }, async request => {
 });
 
 // --- FUNCIÓN PARA GESTIÓN DE USUARIOS ---
-exports.createUser = onCall(async (data, context) => {
-  logger.info("--- INICIO DE createUser (VERSIÓN CON ROLES) ---");
-  logger.info("Datos recibidos:", data);
-  logger.info("Tipo de context.auth:", typeof context.auth);
-  logger.info("Valor de context.auth (directo):", context.auth);
-  logger.info("Valor de context (completo):", context);
-  try {
-    logger.info("Valor de context (JSON stringify):", JSON.stringify(context, null, 2));
-  } catch (e) {
-    logger.error("Error al stringify context:", e);
+exports.createUser = onCall({ region: "us-west4" }, async request => {
+  logger.info("--- INICIO de createUser (Definitiva) ---");
+
+  // 1. Verificación de permisos del llamador
+  const callerRole = request.auth?.token?.role;
+  if (callerRole !== "admin" && callerRole !== "superadmin") {
+    throw new Error("Permiso denegado. Se requiere rol de administrador para crear usuarios.");
   }
 
-  if (context.auth) {
-    logger.info("Context.auth está POPULADO.");
-    logger.info("UID del llamador según context.auth:", context.auth.uid);
-    logger.info("Claims del llamador según context.auth:", context.auth.token);
-  } else {
-    logger.error("Context.auth está VACÍO (null/undefined). Esto es inesperado si la verificación pasó.");
+  // 2. Verificación de los datos de entrada
+  const { email, password, username, role } = request.data;
+  if (!email || !password || !username || !role) {
+    throw new Error("Datos incompletos. Se requiere email, password, username y role.");
   }
 
-  if (!context.auth) {
-    throw new HttpsError(
-      "unauthenticated",
-      "Debes estar autenticado para crear usuarios.",
-    );
-  }
+  logger.info(`PERMISO CONCEDIDO. Admin '${callerRole}' (${request.auth.uid}) creando nuevo usuario con rol '${role}'.`);
 
-  // Si solo quieres que los admins existentes puedan crear nuevos superadmins:
-  const callerUid = context.auth.uid;
-  const callerUserRecord = await admin.auth().getUser(callerUid);
-  const callerCustomClaims = callerUserRecord.customClaims;
-
-  if (!callerCustomClaims || callerCustomClaims.role !== "superadmin") {
-    throw new HttpsError(
-      "permission-denied",
-      "Solo un superadmin puede crear nuevos usuarios con roles elevados.",
-    );
-  }
-  // Fin del PASO 1
+  let newUserRecord; // La declaramos aquí para poder usarla en el bloque catch
 
   try {
-    const { email, password, username, role } = data; // Asegúrate de que `role` se envíe desde SvelteKit
-    if (!email || !password || !username || !role) {
-      throw new Error("Faltan datos (email, password, username, o role).");
-    }
-
-    // Crea el usuario
-    const userRecord = await admin.auth().createUser({
-      email,
-      password,
+    // --- PASO A: Crear el usuario en Firebase Authentication ---
+    logger.info(`Paso 1/3: Creando usuario en Auth para ${email}...`);
+    newUserRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
       displayName: username,
     });
+    logger.info(`Paso 1/3: ¡Éxito! Usuario ${newUserRecord.uid} creado en Auth.`);
 
+    // --- PASO B: Asignar el Custom Claim para el rol ---
+    logger.info(`Paso 2/3: Asignando rol (Claim) '${role}'...`);
+    await admin.auth().setCustomUserClaims(newUserRecord.uid, { role: role });
+    logger.info("Paso 2/3: ¡Éxito! Rol asignado.");
 
-    await admin.auth().setCustomUserClaims(userRecord.uid, { role: role });
+    // --- PASO C: Crear el documento en Firestore ---
+    logger.info("Paso 3/3: Creando documento en Firestore...");
+    const userDocRef = admin.firestore().collection("users").doc(newUserRecord.uid);
+    await userDocRef.set({
+      uid: newUserRecord.uid,
+      email: email,
+      username: username,
+      role: role,
+      isBlocked: false,
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    logger.info("Paso 3/3: ¡Éxito! Documento creado.");
 
-
-    logger.info(`¡ÉXITO en createUser! UID: ${userRecord.uid}, Rol: ${role}`);
-    return { success: true, uid: userRecord.uid, role: role };
+    const message = `Usuario ${newUserRecord.uid} creado y configurado completamente.`;
+    return { success: true, uid: newUserRecord.uid, message: message };
   } catch (error) {
-    logger.error("ERROR en createUser:", error);
-    // Para errores específicos de Firebase Auth, puedes mapearlos a HttpsError
-    if (error.code === "auth/email-already-in-use") {
-      throw new HttpsError("already-exists", "El email ya está en uso.");
-    } else if (error.code === "auth/invalid-password") {
-      throw new HttpsError("invalid-argument", "La contraseña es demasiado débil.");
+    logger.error(`Error en el proceso de creación para ${email}:`, error);
+
+    // --- LÓGICA DE ROLLBACK ---
+    // Si el usuario se creó en Auth pero algo falló después, lo borramos para no dejar datos inconsistentes.
+    if (newUserRecord) {
+      logger.warn(`Realizando rollback: eliminando al usuario ${newUserRecord.uid} de Auth debido a un error en un paso posterior.`);
+      await admin.auth().deleteUser(newUserRecord.uid);
     }
-    // Para otros errores, un error interno genérico
-    throw new HttpsError("internal", error.message);
+
+    // Devolvemos un error claro al cliente
+    if (error.code === "auth/email-already-exists") {
+      throw new Error("El correo electrónico ya está en uso por otro usuario.");
+    }
+    throw new Error(`Error al crear usuario: ${error.message}`);
   }
-} );
+});
 
 exports.deleteUserTest = onCall({ region: "us-west4" }, async request => {
   logger.info("--- INICIO de deleteUserTest (v2) ---");

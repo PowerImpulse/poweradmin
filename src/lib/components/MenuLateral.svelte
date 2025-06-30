@@ -36,7 +36,7 @@ function toggleSubMenu() {
     <SideLink route="/panel/equipos" > <span><ConnectRecursive size={16} /></span>EQUIPOS </SideLink>
     
   </ul>
-<div class="pb-2"><ButtonLogOut>Logout</ButtonLogOut></div>
+<div class="pb-2"><ButtonLogOut>Cerrar Sesión</ButtonLogOut></div>
   
 </nav>
 
