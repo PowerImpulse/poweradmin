@@ -2,8 +2,8 @@
   // src/lib/usuarios/AccionesUsuario.svelte
 
   import { CheckmarkOutline, NullSign, TrashCan, Identification } from 'carbon-icons-svelte';
-  import { httpsCallable } from 'firebase/functions'; // Solo necesitas httpsCallable
-  import { functions } from '$lib/client'; // Importas la instancia ya configurada
+  import { httpsCallable, getFunctions } from 'firebase/functions'; 
+  import { app } from '$lib/client'; 
   
   // --- 2. PROPS Y ESTADO (sin cambios) ---
   export let usuario: { uid: string; isBlocked: boolean; } | undefined = undefined;
@@ -22,10 +22,11 @@
     errorMessage = '';
 
     try {
-      // --- ¡CORRECCIÓN CLAVE! ---
-      // Llama a httpsCallable directamente con la instancia 'functions' que importaste.
-      // Ya no hay que crear una nueva variable.
-      const deleteUserCallable = httpsCallable(functions, 'deleteUser');
+       const functions = getFunctions(app, 'us-west4');
+    // --- Asegúrate de que apunte a la nueva función ---
+    const deleteUserCallable = httpsCallable(functions, 'deleteUser'); 
+    
+    await deleteUserCallable({ uid: usuario.uid });
       
       await deleteUserCallable({ uid: usuario.uid });
       onUserDeleted(usuario.uid);

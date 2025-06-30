@@ -239,6 +239,54 @@ exports.deleteUserTest = onCall({ region: "us-west4" }, async request => {
   }
 });
 
+exports.deleteUser = onCall({ region: "us-west4" }, async request => {
+  logger.info("--- INICIO de deleteUser (Definitiva) ---");
+
+  // 1. Verificación de permisos del llamador
+  const callingUserRole = request.auth?.token?.role;
+  if (callingUserRole !== "admin" && callingUserRole !== "superadmin") {
+    throw new Error("Permiso denegado. Se requiere rol de administrador.");
+  }
+
+  // 2. Verificación de los datos de entrada
+  const uidToDelete = request.data.uid;
+  if (!uidToDelete) {
+    throw new Error("Se requiere un 'uid' para eliminar.");
+  }
+
+  logger.info(`PERMISO CONCEDIDO. Admin '${callingUserRole}' (${request.auth.uid}) eliminando al usuario: ${uidToDelete}`);
+
+  try {
+    // 3. Eliminar de Authentication (Paso Crítico)
+    logger.info("Paso 1/2: Intentando eliminar de Authentication...");
+    await admin.auth().deleteUser(uidToDelete);
+    logger.info("Paso 1/2: ¡Éxito! Usuario eliminado de Authentication.");
+
+    // 4. Eliminar de Firestore
+    logger.info("Paso 2/2: Intentando eliminar de Firestore...");
+    const userDocRef = admin.firestore().collection("users").doc(uidToDelete);
+    await userDocRef.delete();
+    logger.info("Paso 2/2: ¡Éxito! Documento eliminado de Firestore.");
+
+    const message = `Usuario ${uidToDelete} eliminado completamente de Auth y Firestore.`;
+    return { success: true, message: message };
+  } catch (error) {
+    logger.error(`Error durante el proceso de eliminación para ${uidToDelete}:`, error);
+    // Si el usuario no se encontró en Auth, puede que ya estuviera borrado.
+    // Intentamos borrar de Firestore de todas formas para limpiar.
+    if (error.code === "auth/user-not-found") {
+      logger.warn("El usuario no se encontró en Auth (puede que ya estuviera borrado). Intentando limpiar Firestore...");
+      try {
+        await admin.firestore().collection("users").doc(uidToDelete).delete();
+        return { success: true, message: "Usuario no encontrado en Auth, pero documento de Firestore eliminado." };
+      } catch (firestoreError) {
+        logger.error("Error al intentar limpiar el documento de Firestore:", firestoreError);
+      }
+    }
+    throw new Error(`Error al eliminar usuario: ${error.message}`);
+  }
+});
+
 // exports.deleteUser = onCall(userManagement.deleteUser);
 
 // Esta ya estaba bien en v2
