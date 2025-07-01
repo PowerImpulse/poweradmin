@@ -134,7 +134,7 @@
             if (e.code === 'auth/email-already-in-use') {
                 error = 'El correo electrónico ya está en uso.';
             } else if (e.code === 'auth/weak-password') {
-                error = 'La contraseña es demasiado débil (debe tener al menos 6 caracteres).';
+                error = 'La contraseña es demasiado débil (debe tener al menos 6 carácteres).';
             } else {
                  error = `Error al crear usuario: ${e.message}`;
             }
