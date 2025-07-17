@@ -21,6 +21,102 @@ const empresasMap = [
   },
 ];
 
+// --- NUEVA FUNCIÓN ---
+// Genera un PDF para usuarios SIN asistencias en el periodo.
+function generarPdfSinAsistencias(userInfo, mesReporteStr, options = {}) {
+  const { TIME_ZONE = "America/Mexico_City", periodoTipo = "" } = options;
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: "Letter",
+      margins: { top: 28, bottom: 28, left: 30, right: 30 },
+    });
+
+    const buffers = [];
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", reject);
+
+    // --- ENCABEZADO Y LOGO DINÁMICO (Lógica reutilizada) ---
+    let logoToUsePath; let colorPrincipal; let empresaNombre;
+    const match = empresasMap.find(cfg => userInfo.email?.toLowerCase().includes(cfg.domain));
+    if (match) {
+      logoToUsePath = path.join(__dirname, "..", match.logo);
+      colorPrincipal = match.color;
+      empresaNombre = match.name;
+    } else {
+      logger.warn(`WARN_TEMA_SIN_ASISTENCIA: No se pudo determinar tema para: ${userInfo.email}. Usando valores por defecto.`);
+      logoToUsePath = path.join(__dirname, "..", "assets/logopi.png");
+      colorPrincipal = "#000000";
+      empresaNombre = "Reporte General";
+    }
+
+    const logoX = doc.page.margins.left;
+    const logoY = doc.page.margins.top;
+    const logoWidth = 100;
+    const rightBlockX = logoX + logoWidth + 20;
+    const rightBlockWidth = doc.page.width - rightBlockX - doc.page.margins.right;
+
+    try {
+      if (fs.existsSync(logoToUsePath)) {
+        doc.image(logoToUsePath, logoX, logoY, { width: logoWidth });
+      } else {
+        logger.warn(`LOGO_WARN: Logo no encontrado en ${logoToUsePath}`);
+        doc.fontSize(8).text("[Logo de la Empresa]", logoX, logoY);
+      }
+    } catch (imgError) {
+      logger.error("LOGO_ERROR:", imgError.message);
+      doc.fontSize(8).text("[Error al cargar logo]", logoX, logoY);
+    }
+
+    doc.fontSize(16).text("Resumen de Asistencias", rightBlockX, logoY, { width: rightBlockWidth, align: "right" });
+    doc.moveDown(0.5);
+    doc.fontSize(10);
+    doc.text(`Colaborador: ${userInfo.username || "N/A"}`, { align: "right", width: rightBlockWidth });
+    doc.text(`ID de Usuario: ${userInfo.uid || "N/A"}`, { align: "right", width: rightBlockWidth });
+    doc.text(`Email: ${userInfo.email || "N/A"}`, { align: "right", width: rightBlockWidth });
+    doc.moveDown(0.5);
+    const tituloPeriodo = `Periodo: ${periodoTipo}, ${mesReporteStr}`;
+    doc.fontSize(12).text(tituloPeriodo, { align: "right", width: rightBlockWidth });
+
+    doc.y = logoY + 120; // Posición después del encabezado
+    doc.lineWidth(5).strokeColor(colorPrincipal).moveTo(doc.page.margins.left, doc.y).
+      lineTo(doc.page.width - doc.page.margins.right, doc.y).stroke();
+    doc.moveDown(4);
+
+    // --- MENSAJE CENTRAL ---
+    doc.fontSize(12).fillColor("#333333").text(
+      "No se encontraron registros de asistencia para este colaborador durante el periodo especificado.",
+      doc.page.margins.left + 50,
+      doc.y,
+      {
+        width: doc.page.width - doc.page.margins.left - doc.page.margins.right - 100,
+        align: "center",
+      },
+    );
+
+    // --- ESPACIO PARA FIRMA (Lógica reutilizada) ---
+    const firmaHeight = 65;
+    const firmaBlockWidth = 200;
+    const firmaYPosition = doc.page.height - doc.page.margins.bottom - 30 - firmaHeight;
+    const firmaX = (doc.page.width - firmaBlockWidth) / 2;
+    doc.fontSize(9).text("Firma de conformidad del colaborador:", firmaX, firmaYPosition, { align: "center", width: firmaBlockWidth });
+    doc.rect(firmaX, firmaYPosition + 12, firmaBlockWidth, firmaHeight - 12).stroke();
+    doc.fontSize(8).text("_________________________", firmaX, firmaYPosition + firmaHeight - 25, { align: "center", width: firmaBlockWidth });
+    doc.fontSize(8).text(`${userInfo.username || "N/A"}`, firmaX, firmaYPosition + firmaHeight - 15, { align: "center", width: firmaBlockWidth });
+
+    // --- PIE DE PÁGINA (Lógica reutilizada) ---
+    doc.fontSize(8).text(
+      `Reporte generado el ${new Date().toLocaleDateString("es-MX", { timeZone: TIME_ZONE })}. ${empresaNombre}`,
+      doc.page.margins.left,
+      doc.page.height - doc.page.margins.bottom - 12,
+      { align: "center", width: doc.page.width - doc.page.margins.left - doc.page.margins.right },
+    );
+
+    doc.end();
+  });
+}
+
 function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
   const { TIME_ZONE = "America/Mexico_City", periodoTipo = "" } = options;
 
@@ -238,4 +334,4 @@ function generarPdfConPdfKit(datosUsuario, mesReporteStr, options = {}) {
   });
 }
 
-module.exports = { generarPdfConPdfKit };
+module.exports = { generarPdfConPdfKit, generarPdfSinAsistencias };

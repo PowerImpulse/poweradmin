@@ -27,7 +27,12 @@ setGlobalOptions({
 const enviarAsistenciasModule = require("./mails/enviarAsistencias");
 const pdfGeneratorModule = require("./mails/generarPdfKit");
 
-const servicioDeps = { db, Timestamp, logger, generarPdfConPdfKit: pdfGeneratorModule.generarPdfConPdfKit,
+const servicioDeps = {
+  db,
+  Timestamp,
+  logger,
+  generarPdfConPdfKit: pdfGeneratorModule.generarPdfConPdfKit,
+  generarPdfSinAsistencias: pdfGeneratorModule.generarPdfSinAsistencias, // <--- NUEVA LÍNEA
   TIME_ZONE: REPORT_DATA_TIME_ZONE,
 };
 
@@ -282,7 +287,6 @@ exports.deleteUser = onCall({ region: "us-west4" }, async request => {
     throw new Error(`Error al eliminar usuario: ${error.message}`);
   }
 });
-
 
 
 exports.sendPushNotification = functions.https.onCall(async (data, _) => {
