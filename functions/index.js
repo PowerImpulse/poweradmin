@@ -284,28 +284,6 @@ exports.deleteUser = onCall({ region: "us-west4" }, async request => {
 });
 
 
-// exports.deleteUser = onCall(userManagement.deleteUser);
-
-// Esta ya estaba bien en v2
-// exports.setUserRole = onCall(userManagement.setUserRole);
-// exports.makeMeSuperAdmin = onRequest(userManagement.makeMeSuperAdmin);
-
-// --- FUNCIONES DE PRUEBA ---
-// const { onRequest } = require("firebase-functions/v2/https");
-// const seedDataModule = require("./mails/seedData");
-// exports.seedData = onRequest(
-//   { timeoutSeconds: 120, memory: "256MiB" },
-//   (req, res) => seedDataModule.seedData(req, res, { db, Timestamp, logger }),
-// );
-
-// const testPdfModule = require("./mails/testPdfGenerator");
-// exports.verPdfDePrueba = onRequest(
-//   { timeoutSeconds: 120, memory: "512MiB" },
-//   (req, res) => testPdfModule.testPdfLogic(req, res,
-//     { db, Timestamp, logger, generarPdfConPdfKit: pdfGeneratorModule.generarPdfConPdfKit,
-//       TIME_ZONE: REPORT_DATA_TIME_ZONE },
-//   ),
-// );
 
 exports.sendPushNotification = functions.https.onCall(async (data, _) => {
   const { fcmToken, title, body } = data;
