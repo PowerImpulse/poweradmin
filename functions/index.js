@@ -1,6 +1,7 @@
 // functions/index.js
 const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
+const functions = require("firebase-functions");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onCall } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -305,3 +306,26 @@ exports.deleteUser = onCall({ region: "us-west4" }, async request => {
 //       TIME_ZONE: REPORT_DATA_TIME_ZONE },
 //   ),
 // );
+
+exports.sendPushNotification = functions.https.onCall(async (data, _) => {
+  const { fcmToken, title, body } = data;
+
+  if (!fcmToken || !title || !body) {
+    throw new functions.https.HttpsError("invalid-argument", "Missing fields");
+  }
+
+  const message = {
+    token: fcmToken,
+    notification: {
+      title: title,
+      body: body,
+    },
+  };
+
+  try {
+    await admin.messaging().send(message);
+    return { success: true };
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
