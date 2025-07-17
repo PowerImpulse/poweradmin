@@ -307,11 +307,19 @@ exports.deleteUser = onCall({ region: "us-west4" }, async request => {
 //   ),
 // );
 
-exports.sendPushNotification = functions.https.onCall(async (data, _) => {
-  const { fcmToken, title, body } = data;
+exports.sendPushNotification = functions.https.onCall(async (request, _) => {
+  const { fcmToken, title, body } = request.data;
 
   if (!fcmToken || !title || !body) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing fields");
+    const missingFields = [
+      !fcmToken ? "fcmToken" : null,
+      !title ? "title" : null,
+      !body ? "body" : null,
+    ].filter(Boolean).join(", ");
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      `Missing fields: ${missingFields}. Data received: ${JSON.stringify(request.data)}`,
+    );
   }
 
   const message = {
