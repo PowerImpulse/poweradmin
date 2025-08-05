@@ -9,7 +9,7 @@
     email: string;
     password: string;
     username: string;
-    role: 'admin' | 'superadmin' | 'gerente' | 'tecnico' | 'empleado' | 'visor';
+    role: 'empleado' | 'gerente' | 'contratista' | 'tecnico';
   };
 
   // Un tipo para la respuesta que esperamos de la función

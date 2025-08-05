@@ -83,7 +83,7 @@ const setUserRole = async (data, context) => {
   logger.info(`Permiso CONCEDIDO. Admin "${callingUserRole}" está asignando rol.`);
 
   const { uid, role } = data;
-  const validRoles = ["admin", "superadmin", "gerente", "tecnico", "empleado", "visor"]; // Asegúrate que todos tus roles estén aquí
+  const validRoles = ["empleado", "gerente", "tecnico", "contratista"]; // Asegúrate que todos tus roles estén aquí
 
   if (!uid || !role || !validRoles.includes(role)) {
     throw new HttpsError(

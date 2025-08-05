@@ -292,11 +292,10 @@
                           <label class="label-field" for="role">Rol:</label>
                           {#if editMode}
                               <select class="input-field" id="role" bind:value={usuario.role} disabled={isSaving}>
-                                  <option value="admin">Admin</option>
-                                  <option value="empleado">Empleado</option>
-                                  <option value="visor">Visor</option>
-                                  <option value="superadmin">Super Admin</option>
-                                  <option value="tecnico">Técnico</option>
+                                s<option value="tecnico" selected>Técnico</option>
+							    <option value="contratista">Contratista</option>
+							    <option value="gerente">Gerente</option>
+							    <option value="empleado">Empleado</option>
                               </select>
                           {:else}<p class="data-field">{usuario.role || 'N/A'}</p>{/if}
                       </div>
